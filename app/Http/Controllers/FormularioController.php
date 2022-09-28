@@ -39,6 +39,7 @@ class FormularioController extends Controller
 
     public function getResponses() {
 
+        //Arrays separados los cuales van a recibir aquellas respuestas pertenecientes a su categoría
         $no_corresponde = [];
         $estado_revisiones = [];
         $estado_llantas = [];
@@ -54,6 +55,8 @@ class FormularioController extends Controller
            por cada categoría de respuesta */
         if(count($resultados_estados) > 0) {
             foreach($resultados_estados as $resultado_estado) {
+
+                /* Si la categoría de respuesta es la especificada, pushea en el respectivo array */
                 if ($resultado_estado->id_categoria_respuesta == 1) {
                     array_push($no_corresponde, $resultado_estado);
                 }
@@ -92,26 +95,26 @@ class FormularioController extends Controller
         ]);
 
         /* Se recorre cada posición del objeto Request y se hace lo siguiente: */
-        for ($index = 0; $index < count($request); $index++) { 
+           for ($index = 0; $index < count(array($request)); $index++) { 
 
-            /* Por cada posición, hace una query para insertar */
-            $query_insert = "INSERT INTO entrega_turnos_verificacion_bitacora 
-            (id_verificacion_tipo, id_estado_verificacion, comentarios, valor)
-            VALUES (?, ?, ?, ?)";
+               /* Por cada posición, hace una query para insertar */
+               $query_insert = "INSERT INTO entrega_turnos_verificacion_bitacora 
+               (id_verificacion_tipo, id_estado_verificacion, hay_comentarios, comentarios, valor)
+               VALUES (?, ?, ?, ?, ?)";
 
-            /* Si el índice existe, la query se ejecuta tomando todos los valores existentes en
-               la posición actual */
-            if (isset($request[$index])) {
-                DB::connection()->select(DB::raw($query_insert), 
-                [$request[$index]["id_tipo_verificacion"], $request[$index]["id_estado_verificacion"], 
-                $request[$index]["comentarios"], $request[$index]["valor"]]);
-            }
+               /* Si el índice existe, la query se ejecuta tomando todos los valores existentes en
+                  la posición actual */
+               if (isset($request[$index])) {
+                   DB::connection()->select(DB::raw($query_insert), 
+                   [$request[$index]["id_tipo_verificacion"], $request[$index]["id_estado_verificacion"], 
+                   $request[$index]["activarComentario"], $request[$index]["comentarios"], $request[$index]["valor"]]);
+               }
 
-            /* Si no existe, se devuelve un mensaje de error en conjunto con el índice que está fallando */
-            else {
-                echo("Error en el índice" . $index);
-            }
-        }
+               /* Si no existe, se devuelve un mensaje de error en conjunto con el índice que está fallando */
+               else {
+                   echo("Error en el índice" . $index);
+               }
+           }
     }
 
     public function insertIntoMainBitacora (Request $request) {
@@ -127,6 +130,8 @@ class FormularioController extends Controller
             'id_medico' => 'required|integer',
             'danos_automotor' => 'required', // Valida si es requerido
             'foto_automotor' => 'nullable|string', //Valida si puede ser nulo y si es una cadena de texto
+            'comentarios_conductor' => 'nullable|string',
+            'comentarios_auxiliar' => 'nullable|string',
             'comentarios_recibido' => 'nullable|string'
         ]);
 
@@ -137,10 +142,10 @@ class FormularioController extends Controller
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         //Verifica si el string de base64 existe o no para empezar la operación
-        if ($request->foto_automotor !== null || $request->foto_automotor !== "") {
+        if ($fields["foto_automotor"] !== null || $fields["foto_automotor"] !== "") {
 
              // Se almacena el string en base64 de la foto de la móvil
-             $imagen = $request->foto_automotor;
+             $imagen = $fields["foto_automotor"];
      
              //Se reemplaza el identificador al inicio del texto por un string vacío
              $imagen = str_replace('data:image/png;base64', '', $imagen);
@@ -149,14 +154,14 @@ class FormularioController extends Controller
              $imagen = str_replace(' ', '+', $imagen);
      
              //Se almacena el nombre de la imagen, que es la placa de la móvil
-             $imagen_nombre = $request->placa;
+             $imagen_nombre = $fields["placa"];
      
-             //Se consigue la fecha actual
+             //Se consigue un UUID cualquiera
              $uuid_imagen = Str::uuid();
      
              /* Se almacena en una variable la propia ruta de la imagen, en dónde se va a almacenar y que nombre
                 va a tener. */
-             $imagen_ruta = 'danos_movil/' . $request->id_movil . '/' . $imagen_nombre . $uuid_imagen . '.png';
+             $imagen_ruta = 'danos_movil/' . $fields["id_movil"] . '/' . $imagen_nombre . $uuid_imagen . '.png';
      
              // Se junta la ruta con la imagen ya decodificada, y se guarda en el almacenamiento
              Storage::put($imagen_ruta, base64_decode($imagen));
@@ -168,8 +173,8 @@ class FormularioController extends Controller
 
         // Se ejecuta la query, tomando todos los valores de la petición y la ruta de la imagen
         DB::connection()->select(DB::raw($query_insert),
-        [$request->id_turno, $request->id_movil, $request->movil, $request->placa, $request->id_auxiliar,
-        $request->id_conductor, $request->id_medico, $request->danos_automotor, $imagen_ruta,
-        $request->comentarios_conductor, $request->comentarios_auxiliar, $request->comentarios_recibido]);
+        [$fields["id_turno"], $fields["id_movil"], $fields["movil"], $fields["placa"], $fields["id_auxiliar"],
+        $fields["id_conductor"], $fields["id_medico"], $fields["danos_automotor"], $imagen_ruta,
+        $fields["comentarios_conductor"], $fields["comentarios_auxiliar"], $fields["comentarios_recibido"]]);
     }
 }
