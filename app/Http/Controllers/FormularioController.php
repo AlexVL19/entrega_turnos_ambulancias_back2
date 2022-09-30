@@ -86,7 +86,7 @@ class FormularioController extends Controller
 
     public function insertIntoBitacora (Request $request) {
 
-        /* Validaciones que comprueban si cada campo cumple con las debidas reglas descritas aquí abajo: */
+        /* Validaciones que comprueban si cada campo cumple con las debidas reglas descritas aquí abajo: */ 
         $fields = $request->validate([
             'id_verificacion_tipo' => 'integer', //Comprueba si los caracteres especificados en la expresión regular coinciden con el valor
             'id_estado_verificacion' => 'integer',
@@ -95,7 +95,7 @@ class FormularioController extends Controller
         ]);
 
         /* Se recorre cada posición del objeto Request y se hace lo siguiente: */
-           for ($index = 0; $index < count(array($request)); $index++) { 
+           for ($index = 0; $index < count($request->all()); $index++) { 
 
                /* Por cada posición, hace una query para insertar */
                $query_insert = "INSERT INTO entrega_turnos_verificacion_bitacora 
