@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormularioController;
+use App\Http\Controllers\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,4 +27,8 @@ Route::controller(FormularioController::class)->group(function () {
     Route::post('/insertIntoBitacora', 'insertIntoBitacora');
     Route::post('insertIntoMain', 'insertIntoMainBitacora');
     Route::get('/getCategories', 'getCategories');
+});
+
+Route::controller(LoginController::class)->group(function () {
+    Route::post('/login', 'authenticate');
 });
