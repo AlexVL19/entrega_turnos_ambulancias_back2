@@ -21,12 +21,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 /* Rutas agrupadas que pertenecen a un controlador en común. */
-Route::controller(FormularioController::class)->group(function () {
-    Route::get('/getVerifications', 'getVerifications');
-    Route::get('/getResponses', 'getResponses');
-    Route::post('/insertIntoBitacora', 'insertIntoBitacora');
-    Route::post('insertIntoMain', 'insertIntoMainBitacora');
-    Route::get('/getCategories', 'getCategories');
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::controller(FormularioController::class)->group(function () {
+        Route::get('/getVerifications', 'getVerifications');
+        Route::get('/getResponses', 'getResponses');
+        Route::post('/insertIntoBitacora', 'insertIntoBitacora');
+        Route::post('insertIntoMain', 'insertIntoMainBitacora');
+        Route::get('/getCategories', 'getCategories');
+    });
 });
 
 Route::controller(LoginController::class)->group(function () {
