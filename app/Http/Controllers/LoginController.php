@@ -86,4 +86,15 @@ class LoginController extends Controller
              ], 401);
          }
     }
+
+    public function logout(Request $request) {
+
+        /* Borra el token asignado para acceder a rutas privadas */
+        auth()->user()->currentAccessToken()->delete();
+
+        /* Devuelve un mensaje que deja constancia de que la sesión ha sido cerrada */
+        return response([
+            'mensaje_logout' => "Sesión cerrada"
+        ], 201);
+    }
 }

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormularioController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\VistaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 /* Rutas agrupadas que pertenecen a un controlador en común. */
+
+/* Se utiliza el middleware de Sanctum para proteger las rutas */
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::controller(FormularioController::class)->group(function () {
         Route::get('/getVerifications', 'getVerifications');
@@ -28,6 +31,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/insertIntoBitacora', 'insertIntoBitacora');
         Route::post('insertIntoMain', 'insertIntoMainBitacora');
         Route::get('/getCategories', 'getCategories');
+    });
+
+    Route::controller(LoginController::class)->group(function () {
+        Route::post('/logout', 'logout');
+    });
+
+    Route::controller(VistaController::class)->group(function () {
+        Route::post('/getTurnData', 'getTurnData');
     });
 });
 
