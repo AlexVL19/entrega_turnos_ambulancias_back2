@@ -28,7 +28,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::controller(FormularioController::class)->group(function () {
         Route::get('/getVerifications', 'getVerifications');
         Route::get('/getResponses', 'getResponses');
-        Route::post('/insertIntoBitacora', 'insertIntoBitacora');
+        Route::post('/insertIntoBitacora/{id}', 'insertIntoBitacora');
         Route::post('insertIntoMain', 'insertIntoMainBitacora');
         Route::get('/getCategories', 'getCategories');
     });

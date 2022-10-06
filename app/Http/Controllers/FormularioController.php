@@ -117,64 +117,64 @@ class FormularioController extends Controller
            }
     }
 
-    public function insertIntoMainBitacora (Request $request) {
+    public function insertIntoMainBitacora ($id_usuario, Request $request) {
 
-        /* Validaciones que evalúan el valor en busca de coincidencias */
-        $fields = $request->validate([
-            'id_turno' => 'required|integer', //Evalúa si la expresión regular coincide y además si es requerido
-            'id_movil' => 'required|integer',
-            'movil' => 'required|string', //Valida si es una cadena de texto
-            'placa' => 'required|string',
-            'id_auxiliar' => 'required|integer',
-            'id_conductor' => 'required|integer',
-            'id_medico' => 'required|integer',
-            'danos_automotor' => 'required', // Valida si es requerido
-            'foto_automotor' => 'nullable|string', //Valida si puede ser nulo y si es una cadena de texto
-            'comentarios_conductor' => 'nullable|string',
-            'comentarios_auxiliar' => 'nullable|string',
-            'comentarios_recibido' => 'nullable|string'
-        ]);
+        $query_aperturas = "SELECT REQVEH, REQENF, REQCON FROM servicio_turnos_aperturas WHERE IdTurno = ?";
 
-        /* Se efectúa una query de inserción */
-        $query_insert = "INSERT INTO entrega_turnos_bitacora (id_turno, id_movil, movil, placa, id_auxiliar,
-        id_conductor, id_medico, danos_automotor, foto_automotor, comentarios_conductor, 
-        comentarios_auxiliar, comentarios_recibido)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $result_aperturas = DB::connection()->select(DB::raw($query_aperturas), [$request->id_turno]);
+
+        $query_usuario = "SELECT cargo FROM usuarios_app WHERE Id = ? LIMIT 1";
+
+        $result_usuario = DB::connection()->select(DB::raw($query_usuario), [$id_usuario]);
+
+        if ($result_usuario[0]->cargo == 'Auxiliar') {
+
+            $fields = $request->validate([
+                'danos_automotor' => 'required', // Valida si es requerido
+                'foto_automotor' => 'nullable|string', //Valida si puede ser nulo y si es una cadena de texto
+                'comentarios_conductor' => 'nullable|string',
+                'comentarios_auxiliar' => 'nullable|string'
+            ]);
+            
+            $query_insert_bitacora = "INSERT INTO entrega_turnos_bitacora (id_turno, id_movil, placa, 
+            id_auxiliar, id_conductor, danos_automotor, foto_automotor, comentarios_conductor, 
+            comentarios_auxiliar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        //Verifica si el string de base64 existe o no para empezar la operación
-        if ($fields["foto_automotor"] !== null || $fields["foto_automotor"] !== "") {
+            //Verifica si el string de base64 existe o no para empezar la operación
+            if ($fields["foto_automotor"] !== null || $fields["foto_automotor"] !== "") {
 
-             // Se almacena el string en base64 de la foto de la móvil
-             $imagen = $fields["foto_automotor"];
-     
-             //Se reemplaza el identificador al inicio del texto por un string vacío
-             $imagen = str_replace('data:image/png;base64', '', $imagen);
-     
-             //Se reemplaza ese espacio por un caracter
-             $imagen = str_replace(' ', '+', $imagen);
-     
-             //Se almacena el nombre de la imagen, que es la placa de la móvil
-             $imagen_nombre = $fields["placa"];
-     
-             //Se consigue un UUID cualquiera
-             $uuid_imagen = Str::uuid();
-     
-             /* Se almacena en una variable la propia ruta de la imagen, en dónde se va a almacenar y que nombre
-                va a tener. */
-             $imagen_ruta = 'danos_movil/' . $fields["id_movil"] . '/' . $imagen_nombre . $uuid_imagen . '.png';
-     
-             // Se junta la ruta con la imagen ya decodificada, y se guarda en el almacenamiento
-             Storage::put($imagen_ruta, base64_decode($imagen));
+                // Se almacena el string en base64 de la foto de la móvil
+                $imagen = $fields["foto_automotor"];
+        
+                //Se reemplaza el identificador al inicio del texto por un string vacío
+                $imagen = str_replace('data:image/png;base64', '', $imagen);
+        
+                //Se reemplaza ese espacio por un caracter
+                $imagen = str_replace(' ', '+', $imagen);
+        
+                //Se almacena el nombre de la imagen, que es la placa de la móvil
+                $imagen_nombre = $fields["placa"];
+        
+                //Se consigue un UUID cualquiera
+                $uuid_imagen = Str::uuid();
+        
+                /* Se almacena en una variable la propia ruta de la imagen, en dónde se va a almacenar y que nombre
+                    va a tener. */
+                $imagen_ruta = 'danos_movil/' . $fields["id_movil"] . '/' . $imagen_nombre . $uuid_imagen . '.png';
+        
+                // Se junta la ruta con la imagen ya decodificada, y se guarda en el almacenamiento
+                Storage::put($imagen_ruta, base64_decode($imagen));
+            }
+
+            else {
+                $imagen_ruta = null;
+            }
+
+            // Se ejecuta la query, tomando todos los valores de la petición y la ruta de la imagen
+            DB::connection()->select(DB::raw($query_insert),
+            [$fields["id_turno"], $result_aperturas_auxiliar[0]->REQVEH, $fields["placa"], $fields["id_auxiliar"],
+            $fields["id_conductor"], $fields["danos_automotor"], $imagen_ruta,
+            $fields["comentarios_conductor"], $fields["comentarios_auxiliar"]]);
         }
-
-        else {
-            $imagen_ruta = null;
-        }
-
-        // Se ejecuta la query, tomando todos los valores de la petición y la ruta de la imagen
-        DB::connection()->select(DB::raw($query_insert),
-        [$fields["id_turno"], $fields["id_movil"], $fields["movil"], $fields["placa"], $fields["id_auxiliar"],
-        $fields["id_conductor"], $fields["id_medico"], $fields["danos_automotor"], $imagen_ruta,
-        $fields["comentarios_conductor"], $fields["comentarios_auxiliar"], $fields["comentarios_recibido"]]);
     }
 }
