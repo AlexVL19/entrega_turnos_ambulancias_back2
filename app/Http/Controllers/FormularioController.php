@@ -134,7 +134,8 @@ class FormularioController extends Controller
         ]);
 
         //Query que trae los IDs del vehículo y el ID del auxiliar y el conductor.
-        $query_aperturas = "SELECT REQVEH, REQENF, REQCON FROM servicio_turnos_aperturas WHERE IdTurno = ?";
+        $query_aperturas = "SELECT ID_Equipo as REQVEH, ID_Auxiliar as REQENF, ID_Conductor as REQCON FROM 
+        htrabajadas WHERE Id_Hora = ?";
 
         $result_aperturas = DB::connection()->select(DB::raw($query_aperturas), [$fields["id_turno"]]);
 

@@ -16,11 +16,13 @@ class VistaController extends Controller {
             en caso de que haya más turnos. */
             $lista_datos_vehiculo = [];
             $lista_datos_turno = [];
+            $formulario_llenado = [];
 
             /* Crea una query la cual obtiene los datos de la apertura en los cuales el auxiliar o el 
             conductor está y que todavía estén activos. */
-            $query_aperturas_auxiliar = "SELECT IdTurno, fecha_apertura, hora_apertura, REQVEH, Turno FROM 
-            servicio_turnos_aperturas WHERE estado = 1 AND REQENF = ?";
+            $query_aperturas_auxiliar = "SELECT Id_Hora as IdTurno, Fecha as fecha_apertura, 
+            ID_Equipo as REQVEH, Turno FROM 
+            htrabajadas WHERE Activo = 1 AND ID_Auxiliar = ?";
 
             $result_aperturas_auxiliar = DB::connection()->select(DB::raw($query_aperturas_auxiliar), [$request->id_cargo]);
 
@@ -44,11 +46,23 @@ class VistaController extends Controller {
                 array_push($lista_datos_turno, $result_datos_turno);
             }
 
+            for ($index = 0; $index < count($result_aperturas_auxiliar); $index++) { 
+                $query_form_llenado = "SELECT formulario_llenado FROM entrega_turnos_bitacora
+                WHERE id_turno = ?";
+
+                $result_form_llenado = DB::connection()->select(DB::raw($query_form_llenado), [
+                    $result_aperturas_auxiliar[$index]->IdTurno
+                ]);
+
+                array_push($formulario_llenado, $result_form_llenado);
+            }
+
             /* Agrupa todas esas respuestas en un JSON */
             return response(json_encode([
                 "datos_turno" => $result_aperturas_auxiliar,
                 "datos_vehiculo" => $lista_datos_vehiculo,
-                "tipo_turno" => $lista_datos_turno
+                "tipo_turno" => $lista_datos_turno,
+                "formulario_llenado" => $formulario_llenado
             ]));
         }
 
@@ -61,8 +75,9 @@ class VistaController extends Controller {
 
             /* Hace una query la cual obtiene los datos de todas las aperturas en los cuales el conductor
             está participando y que estén activos */
-            $query_aperturas_conductor = "SELECT IdTurno, fecha_apertura, hora_apertura, REQVEH, Turno FROM 
-            servicio_turnos_aperturas WHERE estado = 1 AND REQENF = ?";
+            $query_aperturas_conductor = "SELECT Id_Hora as IdTurno, Fecha as fecha_apertura, 
+            ID_Equipo as REQVEH, Turno FROM 
+            htrabajadas WHERE Activo = 1 AND ID_Conductor = ?";
 
             $result_aperturas_conductor = DB::connection()->select(DB::raw($query_aperturas_conductor), [$request->id_cargo]);
 
@@ -101,5 +116,25 @@ class VistaController extends Controller {
                 "mensaje_no_encontrado" => 'No se ha podido encontrar un auxiliar o un conductor. Lo sentimos.'
             ]));
         }
+    }
+
+    public function addCommentsToBitacora(Request $request) {
+
+        if (count($request->all()) > 0) {
+            $query_actualizacion = "UPDATE entrega_turnos_bitacora SET comentarios_entregado = ?,
+            comentarios_recibido = ? WHERE id_turno = ?";
+
+            $result_actualizacion = DB::connection()->select(DB::raw($query_actualizacion), [
+                $request->comentarios_entregado,
+                $request->comentarios_recibido, 
+                $request->id_turno
+            ]);
+        }
+
+        $query_cerrar_turno = "UPDATE htrabajadas SET Activo = 0 WHERE Id_Hora = ?";
+
+        $result_cerrar_turno = DB::connection()->select(DB::raw($query_cerrar_turno), [
+            $request->id_turno
+        ]);
     }
 }

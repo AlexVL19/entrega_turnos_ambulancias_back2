@@ -39,6 +39,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::controller(VistaController::class)->group(function () {
         Route::post('/getTurnData', 'getTurnData');
+        Route::put('/addComments', 'addCommentsToBitacora');
     });
 });
 
