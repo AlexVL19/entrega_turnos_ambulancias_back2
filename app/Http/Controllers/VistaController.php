@@ -54,7 +54,15 @@ class VistaController extends Controller {
                     $result_aperturas_auxiliar[$index]->IdTurno
                 ]);
 
-                array_push($formulario_llenado, $result_form_llenado);
+                if (count($result_form_llenado) == 0) {
+                    array_push($formulario_llenado, json_encode([
+                        'formulario_llenado' => null
+                    ]));
+                }
+
+                else {
+                    array_push($formulario_llenado, $result_form_llenado);
+                }
             }
 
             /* Agrupa todas esas respuestas en un JSON */
