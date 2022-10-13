@@ -124,8 +124,8 @@ class FormularioController extends Controller
 
     public function getAmbulanceData ($id_movil) {
 
-        /* Consigue el soat, la revisión tecnomecánica y el extintor de la hoja de vida el cual el ID de la móvil
-           coincida con el parámetro y esté disponible */
+        /* Consigue el soat, la revisión tecnomecánica y el extintor de la hoja de vida en donde el ID de la móvil
+           coincida con el parámetro y que además esté disponible */
         $query_hojavida = "SELECT id_soat, id_tecnomecanica, id_extintor FROM movil_hojavida WHERE ID_Equipo = ?
         AND estado = 1 LIMIT 1";
 
@@ -137,9 +137,9 @@ class FormularioController extends Controller
         if (count($result_hojavida) > 0) {
 
             /* Recoge todas las fechas de expedición y de revisión en función de los IDs que se trajeron */
-            $query_soat = "SELECT fecha_expedicion FROM movil_soat WHERE id_soat = ?";
+            $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_soat = ?";
 
-            $query_extintores = "SELECT fecha_expedicion FROM movil_extintores WHERE id_extintor = ?";
+            $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_extintor = ?";
 
             $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_tecnomecanica = ?";
 
@@ -157,7 +157,7 @@ class FormularioController extends Controller
             ]));
         }
 
-        /* Si no hay nada, se trae la fecha de hoy a modo de placeholder */
+        /* Si no hay nada, se trae un mensaje de error */
         else {
             return response(json_encode([
                 "mensaje_no_encontrado" => "No se han podido encontrar fechas de acuerdo a esta fecha"
@@ -229,6 +229,8 @@ class FormularioController extends Controller
             }
 
             else {
+
+                //Si no hay alguna imagen, la ruta se vuelve nulo
                 $imagen_ruta = null;
             }
 
@@ -305,6 +307,7 @@ class FormularioController extends Controller
                 $fields["comentarios_conductor"],
             ]);
 
+            //Devuelve el último ID de la última query que ejecutó
             return DB::getPdo()->lastInsertId();
         }
 

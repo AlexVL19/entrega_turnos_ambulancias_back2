@@ -23,7 +23,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 /* Rutas agrupadas que pertenecen a un controlador en común. */
 
-/* Se utiliza el middleware de Sanctum para proteger las rutas */
+/* Se utiliza el middleware de Sanctum para proteger las siguientes rutas */
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::controller(FormularioController::class)->group(function () {
         Route::get('/getVerifications', 'getVerifications');

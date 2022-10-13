@@ -26,27 +26,29 @@ class VistaController extends Controller {
 
             $result_aperturas_auxiliar = DB::connection()->select(DB::raw($query_aperturas_auxiliar), [$request->id_cargo]);
 
-            /* Itera sobre cada apertura que exista y consigue los datos del vehículo de la apertura */
+            /* Itera sobre cada apertura que exista */
             for ($index = 0; $index < count($result_aperturas_auxiliar); $index++) { 
+
+                /* Consigue varios datos del vehículo como el nombre y su placa */
                 $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
 
                 $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
                 [$result_aperturas_auxiliar[$index]->REQVEH]);
 
+                /* Por cada coincidencia va insertando en este array */
                 array_push($lista_datos_vehiculo, $result_datos_vehiculo);
-            }
 
-            /* Itera sobre cada apertura existente y consigue el nombre del turno */
-            for ($index = 0; $index < count($result_aperturas_auxiliar); $index++) { 
+                /* Consigue el nombre del turno cuyo ID coincida con el que se da como parámetro */
                 $query_datos_turno = "SELECT Turno FROM turnos WHERE id_Turno = ?";
 
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_auxiliar[$index]->Turno]);
 
+                /* Por cada coincidencia va agregando a este array */
                 array_push($lista_datos_turno, $result_datos_turno);
-            }
 
-            for ($index = 0; $index < count($result_aperturas_auxiliar); $index++) { 
+                /* Evalúa si esa apertura contiene ya un registro en bitácora, lo que indica que
+                   ya llenó el formulario */
                 $query_form_llenado = "SELECT formulario_llenado FROM entrega_turnos_bitacora
                 WHERE id_turno = ?";
 
@@ -54,15 +56,22 @@ class VistaController extends Controller {
                     $result_aperturas_auxiliar[$index]->IdTurno
                 ]);
 
+                /* Condicional que se ejecuta en caso de que no traiga ningún registro.  */
                 if (count($result_form_llenado) == 0) {
                     array_push($formulario_llenado, json_encode([
                         'formulario_llenado' => null
                     ]));
                 }
 
+                /* Por cada coincidencia va agregando en este array */
                 else {
                     array_push($formulario_llenado, $result_form_llenado);
                 }
+
+                //Query que trae los comentarios del turno anterior **(EN PROCESO)**
+                $query_ver_comentarios = "SELECT comentarios_entregado FROM entrega_turnos_bitacora WHERE
+                id_turno = ?";
+
             }
 
             /* Agrupa todas esas respuestas en un JSON */
@@ -80,6 +89,7 @@ class VistaController extends Controller {
             /* Arrays que almacenan los datos del vehículo y el turno */
             $lista_datos_vehiculo = [];
             $lista_datos_turno = [];
+            $formulario_llenado = [];
 
             /* Hace una query la cual obtiene los datos de todas las aperturas en los cuales el conductor
             está participando y que estén activos */
@@ -89,24 +99,46 @@ class VistaController extends Controller {
 
             $result_aperturas_conductor = DB::connection()->select(DB::raw($query_aperturas_conductor), [$request->id_cargo]);
 
-            /* Por cada apertura que exista, consigue los datos de la móvil */
+            /* Por cada apertura que exista */
             for ($index = 0; $index < count($result_aperturas_conductor); $index++) { 
+
+                /* Obtiene la información del vehículo que pertenezca a ese turno */
                 $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
 
                 $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
                 [$result_aperturas_conductor[$index]->REQVEH]);
 
+                /* Cada coincidencia se guarda dentro del array */
                 array_push($lista_datos_vehiculo, $result_datos_vehiculo);
-            }
 
-            /* Por cada apertura que exista, consigue el nombre del turno */
-            for ($index = 0; $index < count($result_aperturas_conductor); $index++) { 
+                /* Obtiene el nombre del turno en función del ID otorgado */
                 $query_datos_turno = "SELECT Turno FROM turnos WHERE id_Turno = ?";
 
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_conductor[$index]->Turno]);
 
+                /* Cada coincidencia se guarda dentro del array */
                 array_push($lista_datos_turno, $result_datos_turno);
+
+                /* Verifica si la bandera de formulario llenado está activa y si hay alguno */
+                $query_form_llenado = "SELECT formulario_llenado FROM entrega_turnos_bitacora
+                WHERE id_turno = ?";
+
+                $result_form_llenado = DB::connection()->select(DB::raw($query_form_llenado), [
+                    $result_aperturas_conductor[$index]->IdTurno
+                ]);
+
+                /* Si no hay ninguno, trae un null dentro de un json */
+                if (count($result_form_llenado) == 0) {
+                    array_push($formulario_llenado, json_encode([
+                        'formulario_llenado' => null
+                    ]));
+                }
+
+                else {
+                    /* Cada coincidencia se guarda dentro del array */
+                    array_push($formulario_llenado, $result_form_llenado);
+                }
             }
 
             /* Agrupa todas esas respuestas en un JSON */
@@ -128,17 +160,19 @@ class VistaController extends Controller {
 
     public function addCommentsToBitacora(Request $request) {
 
+        //Si encuentra algún campo para ser insertado
         if (count($request->all()) > 0) {
-            $query_actualizacion = "UPDATE entrega_turnos_bitacora SET comentarios_entregado = ?,
-            comentarios_recibido = ? WHERE id_turno = ?";
+
+            //Actualiza el registro en bitácora con el ID de turno especificado para que incluya ese comentario
+            $query_actualizacion = "UPDATE entrega_turnos_bitacora SET comentarios_entregado = ? WHERE id_turno = ?";
 
             $result_actualizacion = DB::connection()->select(DB::raw($query_actualizacion), [
-                $request->comentarios_entregado,
-                $request->comentarios_recibido, 
+                $request->comentarios_entregado, 
                 $request->id_turno
             ]);
         }
 
+        //Al dar clic en terminar turno, se desactiva el turno que hay en htrabajadas, dando así por terminado el turno
         $query_cerrar_turno = "UPDATE htrabajadas SET Activo = 0 WHERE Id_Hora = ?";
 
         $result_cerrar_turno = DB::connection()->select(DB::raw($query_cerrar_turno), [
