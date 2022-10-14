@@ -17,12 +17,13 @@ class VistaController extends Controller {
             $lista_datos_vehiculo = [];
             $lista_datos_turno = [];
             $formulario_llenado = [];
+            $datos_comentarios = [];
 
             /* Crea una query la cual obtiene los datos de la apertura en los cuales el auxiliar o el 
             conductor está y que todavía estén activos. */
             $query_aperturas_auxiliar = "SELECT Id_Hora as IdTurno, Fecha as fecha_apertura, 
-            ID_Equipo as REQVEH, Turno FROM 
-            htrabajadas WHERE Activo = 1 AND ID_Auxiliar = ?";
+            comentarios_operador, ID_Equipo as REQVEH, Turno FROM 
+            htrabajadas WHERE Activo = 2 AND ID_Auxiliar = ?";
 
             $result_aperturas_auxiliar = DB::connection()->select(DB::raw($query_aperturas_auxiliar), [$request->id_cargo]);
 
@@ -69,9 +70,20 @@ class VistaController extends Controller {
                 }
 
                 //Query que trae los comentarios del turno anterior **(EN PROCESO)**
-                $query_ver_comentarios = "SELECT comentarios_entregado FROM entrega_turnos_bitacora WHERE
+                $query_comentarios_anterior = "SELECT comentarios_entregado FROM entrega_turnos_bitacora WHERE
                 id_turno = ?";
 
+                $result_comentarios_anterior = DB::connection()->select(DB::raw($query_comentarios_anterior), [
+                    ($result_aperturas_auxiliar[$index]->IdTurno - 1)
+                ]);
+
+                if (count($result_comentarios_anterior) == 0) {
+                    $result_comentarios_anterior = json_encode([
+                        "comentarios_entregado" => null
+                    ]);
+                }
+
+                array_push($datos_comentarios, $result_comentarios_anterior);
             }
 
             /* Agrupa todas esas respuestas en un JSON */
@@ -79,7 +91,8 @@ class VistaController extends Controller {
                 "datos_turno" => $result_aperturas_auxiliar,
                 "datos_vehiculo" => $lista_datos_vehiculo,
                 "tipo_turno" => $lista_datos_turno,
-                "formulario_llenado" => $formulario_llenado
+                "formulario_llenado" => $formulario_llenado,
+                "comentarios_anterior" => $datos_comentarios
             ]));
         }
 
@@ -173,7 +186,7 @@ class VistaController extends Controller {
         }
 
         //Al dar clic en terminar turno, se desactiva el turno que hay en htrabajadas, dando así por terminado el turno
-        $query_cerrar_turno = "UPDATE htrabajadas SET Activo = 0 WHERE Id_Hora = ?";
+        $query_cerrar_turno = "UPDATE htrabajadas SET Activo = 1 WHERE Id_Hora = ?";
 
         $result_cerrar_turno = DB::connection()->select(DB::raw($query_cerrar_turno), [
             $request->id_turno
