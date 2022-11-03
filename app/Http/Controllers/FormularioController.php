@@ -44,6 +44,7 @@ class FormularioController extends Controller
         $estado_revisiones = [];
         $estado_llantas = [];
         $estado_maletines = [];
+        $estado_verificacion_vehiculo = [];
 
         //Queries que toman las posibles respuestas conforme a su categoría de respuesta.
         $query_estados = "SELECT * FROM entrega_turnos_verificacion_estado WHERE estado = 1";
@@ -72,6 +73,10 @@ class FormularioController extends Controller
                 if ($resultado_estado->id_categoria_respuesta == 4) {
                     array_push($estado_maletines, $resultado_estado);
                 }
+
+                if ($resultado_estado->id_categoria_respuesta == 5) {
+                    array_push($estado_verificacion_vehiculo, $resultado_estado);
+                }
             }
         }
 
@@ -80,7 +85,8 @@ class FormularioController extends Controller
             "no_corresponde" => $no_corresponde,
             "estado_revisiones" => $estado_revisiones,
             "estado_llantas" => $estado_llantas,
-            "estado_maletines" => $estado_maletines
+            "estado_maletines" => $estado_maletines,
+            "si_no" => $estado_verificacion_vehiculo
         ]));
     }
 
