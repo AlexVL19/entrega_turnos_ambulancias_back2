@@ -13,7 +13,7 @@ class FormularioController extends Controller
     public function getVerifications () {
 
         //Se consigue los tipos de verificación
-        $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion FROM entrega_turnos_verificacion_tipo";
+        $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo";
 
         //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
         $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
@@ -97,7 +97,8 @@ class FormularioController extends Controller
             'id_verificacion_tipo' => 'integer', //Comprueba si los caracteres especificados en la expresión regular coinciden con el valor
             'id_estado_verificacion' => 'integer',
             'comentarios' => 'nullable|string', //Comprueba si es una cadena de texto
-            'valor' => 'nullable|integer'
+            'valor' => 'nullable|integer',
+            'carga' => 'nullable|integer'
         ]);
 
         /* Se recorre cada posición del objeto Request y se hace lo siguiente: */
@@ -105,8 +106,8 @@ class FormularioController extends Controller
 
                /* Por cada posición, hace una query para insertar */
                $query_insert = "INSERT INTO entrega_turnos_verificacion_bitacora 
-               (id_bitacora, id_verificacion_tipo, id_estado_verificacion, hay_comentarios, comentarios, valor)
-               VALUES (?, ?, ?, ?, ?, ?)";
+               (id_bitacora, id_verificacion_tipo, id_estado_verificacion, hay_comentarios, comentarios, valor, carga_inicial)
+               VALUES (?, ?, ?, ?, ?, ?, ?)";
 
                /* Si el índice existe, la query se ejecuta tomando todos los valores existentes en
                   la posición actual */
@@ -117,7 +118,8 @@ class FormularioController extends Controller
                     $request[$index]["id_estado_verificacion"],
                     $request[$index]["activarComentario"], 
                     $request[$index]["comentarios"],
-                    $request[$index]["valor"]
+                    $request[$index]["valor"],
+                    $request[$index]["carga"]
                     ]);
                }
 
@@ -130,45 +132,100 @@ class FormularioController extends Controller
 
     public function getAmbulanceData ($id_movil) {
 
-        /* Consigue el soat, la revisión tecnomecánica y el extintor de la hoja de vida en donde el ID de la móvil
-           coincida con el parámetro y que además esté disponible */
-        $query_hojavida = "SELECT id_soat, id_tecnomecanica, id_extintor FROM movil_hojavida WHERE ID_Equipo = ?
-        AND estado = 1 LIMIT 1";
+        $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_equipo = ? 
+        ORDER BY id_soat DESC LIMIT 1";
 
-        $result_hojavida = DB::connection()->select(DB::raw($query_hojavida), [
+        $result_soat = DB::connection()->select(DB::raw($query_soat), [
             $id_movil
         ]);
 
-        /* Si encuentra algún registro en el resultado de la query */
-        if (count($result_hojavida) > 0) {
+        $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
+        ORDER BY id_extintor DESC LIMIT 1";
 
-            /* Recoge todas las fechas de expedición y de revisión en función de los IDs que se trajeron */
-            $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_soat = ?";
+        $result_extintores = DB::connection()->select(DB::raw($query_extintores), [
+            $id_movil
+        ]);
 
-            $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_extintor = ?";
+        $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_equipo = ? 
+        ORDER BY id_tecnomecanica DESC LIMIT 1";
 
-            $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_tecnomecanica = ?";
+        $result_tecnomecanica = DB::connection()->select(DB::raw($query_tecnomecanica), [
+            $id_movil
+        ]);
 
-            $result_soat = DB::connection()->select(DB::raw($query_soat), [$result_hojavida[0]->id_soat]);
+        $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
+        WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
-            $result_extintores = DB::connection()->select(DB::raw($query_extintores), [$result_hojavida[0]->id_extintor]);
+        $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
+            $id_movil
+        ]);
 
-            $result_tecno = DB::connection()->select(DB::raw($query_tecnomecanica), [$result_hojavida[0]->id_tecnomecanica]);
+        $query_cambios_aceite = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_motor 
+        WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
 
-            /* Devuelve todas las respuestas agrupadas en un JSON*/
+        $result_cambios_aceite = DB::connection()->select(DB::raw($query_cambios_aceite), [
+            $id_movil
+        ]);
+
+        $query_cambios_frenos = "SELECT fecha_ultimo_cambio FROM movil_cambios_frenos
+        WHERE id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
+
+        $result_cambios_frenos = DB::connection()->select(DB::raw($query_cambios_frenos), [
+            $id_movil
+        ]);
+
+        $query_cambios_suspension = "SELECT fecha_ultimo_cambio FROM movil_cambios_suspension
+        WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1"; 
+
+        $result_cambios_suspension = DB::connection()->select(DB::raw($query_cambios_suspension), [
+            $id_movil
+        ]);
+
+        /* Devuelve todas las respuestas agrupadas en un JSON*/
             return response(json_encode([
                 "fecha_soat" => $result_soat,
                 "fecha_extintor" => $result_extintores,
-                "revision_tecno" => $result_tecno
+                "revision_tecno" => $result_tecnomecanica,
+                "cambios_hidraulica" => $result_cambios_hidraulica,
+                "cambios_aceite" => $result_cambios_aceite,
+                "cambios_frenos" => $result_cambios_frenos,
+                "cambios_suspension" => $result_cambios_suspension
             ]));
-        }
 
-        /* Si no hay nada, se trae un mensaje de error */
-        else {
-            return response(json_encode([
-                "mensaje_no_encontrado" => "No se han podido encontrar fechas de acuerdo a esta fecha"
-            ]));
-        }
+        
+
+        // /* Consigue el soat, la revisión tecnomecánica y el extintor de la hoja de vida en donde el ID de la móvil
+        //    coincida con el parámetro y que además esté disponible */
+        // $query_hojavida = "SELECT id_soat, id_tecnomecanica, id_extintor FROM movil_hojavida WHERE ID_Equipo = ?
+        // AND estado = 1 LIMIT 1";
+
+        // $result_hojavida = DB::connection()->select(DB::raw($query_hojavida), [
+        //     $id_movil
+        // ]);
+
+        // /* Si encuentra algún registro en el resultado de la query */
+        // if (count($result_hojavida) > 0) {
+
+        //     /* Recoge todas las fechas de expedición y de revisión en función de los IDs que se trajeron */
+        //     $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_soat = ?";
+
+        //     $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_extintor = ?";
+
+        //     $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_tecnomecanica = ?";
+
+        //     $result_soat = DB::connection()->select(DB::raw($query_soat), [$result_hojavida[0]->id_soat]);
+
+        //     $result_extintores = DB::connection()->select(DB::raw($query_extintores), [$result_hojavida[0]->id_extintor]);
+
+        //     $result_tecno = DB::connection()->select(DB::raw($query_tecnomecanica), [$result_hojavida[0]->id_tecnomecanica]);
+        // }
+
+        // /* Si no hay nada, se trae un mensaje de error */
+        // else {
+        //     return response(json_encode([
+        //         "mensaje_no_encontrado" => "No se han podido encontrar fechas de acuerdo a esta fecha"
+        //     ]));
+        // }
     }
 
     public function insertIntoMainBitacora (Request $request) {
@@ -324,5 +381,16 @@ class FormularioController extends Controller
                 'mensaje_error' => "No se pudieron guardar los datos."
             ]));
         }
+    }
+
+    public function getEquiposConCarga($id) {
+        $query_equipos_carga = "SELECT id_verificacion_tipo, id_bitacora, carga_inicial WHERE
+        id_bitacora = ? AND carga_inicial IS NOT NULL";
+
+        $result_equipos_carga = DB::connection()->select(DB::raw($query_equipos_carga), [
+            $id
+        ]);
+
+        return $result_equipos_carga;
     }
 }
