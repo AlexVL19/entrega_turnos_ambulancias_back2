@@ -32,7 +32,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('insertIntoMain', 'insertIntoMainBitacora');
         Route::get('/getCategories', 'getCategories');
         Route::get('getAmbulanceData/{movil}', 'getAmbulanceData');
-        Route::get('/getCargas', 'getEquiposConCarga');
+        Route::post('/getCargas', 'getEquiposConCarga');
     });
 
     Route::controller(LoginController::class)->group(function () {

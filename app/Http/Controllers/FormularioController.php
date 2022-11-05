@@ -383,12 +383,12 @@ class FormularioController extends Controller
         }
     }
 
-    public function getEquiposConCarga($id) {
-        $query_equipos_carga = "SELECT id_verificacion_tipo, id_bitacora, carga_inicial WHERE
-        id_bitacora = ? AND carga_inicial IS NOT NULL";
+    public function getEquiposConCarga(Request $request) {
+        $query_equipos_carga = "SELECT id_verificacion_tipo, id_bitacora, carga_inicial FROM 
+        entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND carga_inicial IS NOT NULL";
 
         $result_equipos_carga = DB::connection()->select(DB::raw($query_equipos_carga), [
-            $id
+            $request->id
         ]);
 
         return $result_equipos_carga;

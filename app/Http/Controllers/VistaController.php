@@ -50,7 +50,7 @@ class VistaController extends Controller {
 
                 /* Evalúa si esa apertura contiene ya un registro en bitácora, lo que indica que
                    ya llenó el formulario */
-                $query_form_llenado = "SELECT formulario_llenado FROM entrega_turnos_bitacora
+                $query_form_llenado = "SELECT formulario_llenado, id_bitacora FROM entrega_turnos_bitacora
                 WHERE id_turno = ?";
 
                 $result_form_llenado = DB::connection()->select(DB::raw($query_form_llenado), [
