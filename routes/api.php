@@ -33,6 +33,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/getCategories', 'getCategories');
         Route::get('getAmbulanceData/{movil}', 'getAmbulanceData');
         Route::post('/getCargas', 'getEquiposConCarga');
+        Route::put('/setCargasFinales', 'setCargasFinales');
+        Route::get('/getConfigs', 'getConfigs');
     });
 
     Route::controller(LoginController::class)->group(function () {

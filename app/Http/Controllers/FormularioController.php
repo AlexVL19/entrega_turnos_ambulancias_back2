@@ -191,41 +191,6 @@ class FormularioController extends Controller
                 "cambios_frenos" => $result_cambios_frenos,
                 "cambios_suspension" => $result_cambios_suspension
             ]));
-
-        
-
-        // /* Consigue el soat, la revisión tecnomecánica y el extintor de la hoja de vida en donde el ID de la móvil
-        //    coincida con el parámetro y que además esté disponible */
-        // $query_hojavida = "SELECT id_soat, id_tecnomecanica, id_extintor FROM movil_hojavida WHERE ID_Equipo = ?
-        // AND estado = 1 LIMIT 1";
-
-        // $result_hojavida = DB::connection()->select(DB::raw($query_hojavida), [
-        //     $id_movil
-        // ]);
-
-        // /* Si encuentra algún registro en el resultado de la query */
-        // if (count($result_hojavida) > 0) {
-
-        //     /* Recoge todas las fechas de expedición y de revisión en función de los IDs que se trajeron */
-        //     $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_soat = ?";
-
-        //     $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_extintor = ?";
-
-        //     $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_tecnomecanica = ?";
-
-        //     $result_soat = DB::connection()->select(DB::raw($query_soat), [$result_hojavida[0]->id_soat]);
-
-        //     $result_extintores = DB::connection()->select(DB::raw($query_extintores), [$result_hojavida[0]->id_extintor]);
-
-        //     $result_tecno = DB::connection()->select(DB::raw($query_tecnomecanica), [$result_hojavida[0]->id_tecnomecanica]);
-        // }
-
-        // /* Si no hay nada, se trae un mensaje de error */
-        // else {
-        //     return response(json_encode([
-        //         "mensaje_no_encontrado" => "No se han podido encontrar fechas de acuerdo a esta fecha"
-        //     ]));
-        // }
     }
 
     public function insertIntoMainBitacora (Request $request) {
@@ -392,5 +357,26 @@ class FormularioController extends Controller
         ]);
 
         return $result_equipos_carga;
+    }
+
+    public function setCargasFinales(Request $request) {
+
+        $query_cargas_finales = "UPDATE entrega_turnos_verificacion_bitacora SET carga_final = ? WHERE id_bitacora = ? AND id_verificacion_tipo = ?";
+
+        foreach($request->all() as $carga) {
+            $result_cargas_finales = DB::connection()->select(DB::raw($query_cargas_finales), [
+                $carga["carga_final"],
+                $carga["id_bitacora"],
+                $carga["id_metodo"]
+            ]);
+        }
+    }
+
+    public function getConfigs() {
+        $query_configs = "SELECT value FROM configs WHERE id_config = 4 LIMIT 1";
+
+        $result_configs = DB::connection()->select(DB::raw($query_configs));
+
+        return $result_configs;
     }
 }
