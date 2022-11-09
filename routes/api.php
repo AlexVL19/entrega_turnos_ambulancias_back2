@@ -35,6 +35,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/getCargas', 'getEquiposConCarga');
         Route::put('/setCargasFinales', 'setCargasFinales');
         Route::get('/getConfigs', 'getConfigs');
+        Route::get('/getTiposProductos', 'getTiposProductosAseo');
+        Route::get('/getProductosAseo', 'getProductosAseo');
     });
 
     Route::controller(LoginController::class)->group(function () {

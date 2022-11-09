@@ -379,4 +379,21 @@ class FormularioController extends Controller
 
         return $result_configs;
     }
+
+    public function getTiposProductosAseo() {
+        $query_tipos_productos = "SELECT * FROM entrega_turnos_tipos_productos_aseo";
+
+        $result_tipos_productos = DB::connection()->select(DB::raw($query_tipos_productos));
+
+        return $result_tipos_productos;
+    }
+
+    public function getProductosAseo() {
+        $query_productos_aseo = "SELECT id_producto_aseo, producto, tipo_producto 
+        FROM entrega_turnos_productos_aseo WHERE estado = 1";
+
+        $result_productos_aseo = DB::connection()->select(DB::raw($query_productos_aseo));
+
+        return $result_productos_aseo;
+    }
 }
