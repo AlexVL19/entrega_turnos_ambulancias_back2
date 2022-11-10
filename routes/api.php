@@ -37,6 +37,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/getConfigs', 'getConfigs');
         Route::get('/getTiposProductos', 'getTiposProductosAseo');
         Route::get('/getProductosAseo', 'getProductosAseo');
+        Route::post('/enviarFormularioAseo', 'enviarFormularioAseo');
     });
 
     Route::controller(LoginController::class)->group(function () {

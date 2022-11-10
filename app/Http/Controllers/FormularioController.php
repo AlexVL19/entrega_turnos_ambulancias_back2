@@ -396,4 +396,24 @@ class FormularioController extends Controller
 
         return $result_productos_aseo;
     }
+
+    public function enviarFormularioAseo(Request $request) {
+        $query_bitacora_aseo = "INSERT INTO entrega_turnos_aseo_bitacora 
+        (id_bitacora, id_tipo_producto, id_producto_aseo, utilizado) VALUES (?, ?, ?, ?)";
+
+        foreach($request->all() as $formulario) {
+            $result_bitacora_aseo = DB::connection()->select(DB::raw($query_bitacora_aseo), [
+                $formulario["id_bitacora"],
+                $formulario["id_tipo"],
+                $formulario["id_producto"],
+                $formulario["utilizado"]
+            ]);
+        }
+
+        $query_bandera_aseo = "UPDATE entrega_turnos_bitacora SET aseo_terminal = 1 WHERE id_bitacora = ?";
+
+        $result_bandera_aseo = DB::connection()->select(DB::raw($query_bandera_aseo), [
+            $formulario["id_bitacora"]
+        ]);
+    }
 }
