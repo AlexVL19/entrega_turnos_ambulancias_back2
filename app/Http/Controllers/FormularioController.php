@@ -370,6 +370,12 @@ class FormularioController extends Controller
                 $carga["id_metodo"]
             ]);
         }
+
+        $query_actualizacion_bandera = "UPDATE entrega_turnos_bitacora SET formulario_cargas_llenado = 1 WHERE id_bitacora = ?";
+
+        $result_actualizacion_bandera = DB::connection()->select(DB::raw($query_actualizacion_bandera), [
+            $carga["id_bitacora"]
+        ]);
     }
 
     public function getConfigs() {
@@ -414,6 +420,45 @@ class FormularioController extends Controller
 
         $result_bandera_aseo = DB::connection()->select(DB::raw($query_bandera_aseo), [
             $formulario["id_bitacora"]
+        ]);
+    }
+
+    public function validarJornada(Request $request) {
+        $query_validacion_jornada = "SELECT id_control_temperatura FROM entrega_turnos_control_temperatura
+        WHERE id_movil = ? AND fecha_registro = ?";
+
+        $result_validacion_jornada = DB::connection()->select(DB::raw($query_validacion_jornada), [
+            $request->id_movil,
+            date("Y-m-d")
+        ]);
+
+        if (count($result_validacion_jornada) == 0) {
+            return 0;
+        }
+
+        else {
+            return 1;
+        }
+    }
+
+    public function enviarFormularioTemperatura(Request $request) {
+        $query_insert_temperatura = "INSERT INTO entrega_turnos_control_temperatura 
+        (id_bitacora, temperatura_max, temperatura_min, humedad_max, humedad_min, jornada)
+        VALUES (?, ?, ?, ?, ?, ?)";
+
+        $result_insert_temperatura = DB::connection()->select(DB::raw($query_insert_temperatura), [
+            $request->id_bitacora,
+            $request->temp_max,
+            $request->temp_min,
+            $request->humedad_max,
+            $request->humedad_min,
+            $request->jornada
+        ]);
+
+        $query_bandera_temperatura = "UPDATE entrega_turnos_bitacora SET formulario_temperatura_llenado = 1 WHERE id_bitacora = ?";
+
+        $result_bandera_temperatura = DB::connection()->select(DB::raw($query_bandera_temperatura), [
+            $request->id_bitacora
         ]);
     }
 }

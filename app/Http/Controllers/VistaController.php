@@ -18,6 +18,7 @@ class VistaController extends Controller {
             $lista_datos_turno = [];
             $formulario_llenado = [];
             $datos_comentarios = [];
+            $banderas_formularios = [];
 
             /* Crea una query la cual obtiene los datos de la apertura en los cuales el auxiliar o el 
             conductor está y que todavía estén activos. */
@@ -84,6 +85,25 @@ class VistaController extends Controller {
                 }
 
                 array_push($datos_comentarios, $result_comentarios_anterior);
+
+                $query_banderas_formularios = "SELECT aseo_terminal, formulario_cargas_llenado, 
+                formulario_temperatura_llenado FROM entrega_turnos_bitacora WHERE id_turno = ?";
+
+                $result_banderas_formularios = DB::connection()->select(DB::raw($query_banderas_formularios), [
+                    $result_aperturas_auxiliar[$index]->IdTurno
+                ]);
+
+                if (count($result_banderas_formularios) == 0) {
+                    $result_banderas_formularios = json_encode([
+                        "aseo_terminal" => null,
+                        "formulario_cargas_llenado" => null,
+                        "formulario_temperatura_llenado" => null
+                    ]);
+                }
+
+                array_push($banderas_formularios, $result_banderas_formularios);
+
+
             }
 
             /* Agrupa todas esas respuestas en un JSON */
@@ -92,6 +112,7 @@ class VistaController extends Controller {
                 "datos_vehiculo" => $lista_datos_vehiculo,
                 "tipo_turno" => $lista_datos_turno,
                 "formulario_llenado" => $formulario_llenado,
+                "banderas_llenados" => $banderas_formularios,
                 "comentarios_anterior" => $datos_comentarios
             ]));
         }
