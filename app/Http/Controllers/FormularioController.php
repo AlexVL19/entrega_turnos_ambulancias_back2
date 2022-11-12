@@ -443,11 +443,12 @@ class FormularioController extends Controller
 
     public function enviarFormularioTemperatura(Request $request) {
         $query_insert_temperatura = "INSERT INTO entrega_turnos_control_temperatura 
-        (id_bitacora, temperatura_max, temperatura_min, humedad_max, humedad_min, jornada)
-        VALUES (?, ?, ?, ?, ?, ?)";
+        (id_bitacora, id_movil, temperatura_max, temperatura_min, humedad_max, humedad_min, jornada)
+        VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $result_insert_temperatura = DB::connection()->select(DB::raw($query_insert_temperatura), [
             $request->id_bitacora,
+            $request->id_movil,
             $request->temp_max,
             $request->temp_min,
             $request->humedad_max,
