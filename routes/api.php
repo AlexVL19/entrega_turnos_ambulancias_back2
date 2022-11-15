@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormularioController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\VistaController;
+use App\Http\Controllers\ListaTurnosController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::controller(VistaController::class)->group(function () {
         Route::post('/getTurnData', 'getTurnData');
         Route::put('/addComments', 'addCommentsToBitacora');
+    });
+
+    Route::controller(ListaTurnosController::class)->group(function () {
+        Route::get('/getTurnosEntregados', 'getTurnosEntregados');
     });
 });
 

@@ -92,6 +92,8 @@ class FormularioController extends Controller
 
     public function insertIntoBitacora (Request $request) {
 
+        $validar_comentarios = false;
+
         /* Validaciones que comprueban si cada campo cumple con las debidas reglas descritas aquí abajo: */ 
         $fields = $request->validate([
             'id_verificacion_tipo' => 'integer', //Comprueba si los caracteres especificados en la expresión regular coinciden con el valor
@@ -121,11 +123,24 @@ class FormularioController extends Controller
                     $request[$index]["valor"],
                     $request[$index]["carga"]
                     ]);
+
+                    if ($request[$index]["comentarios"] !== null) {
+                        $validar_comentarios = true;
+                    }
                }
 
                /* Si no existe, se devuelve un mensaje de error en conjunto con el índice que está fallando */
                else {
                    echo("Error en el índice" . $index);
+               }
+
+               if ($validar_comentarios = true) {
+                $query_actualizar_novedades = "UPDATE entrega_turnos_bitacora SET novedades_formulario = 1 
+                WHERE id_bitacora = ?";
+
+                $result_actualizar_novedades = DB::connection()->select(DB::raw($query_actualizar_novedades), [
+                    $request[0]["id_bitacora_turnos"]
+                ]);
                }
            }
     }
@@ -425,7 +440,7 @@ class FormularioController extends Controller
 
     public function validarJornada(Request $request) {
         $query_validacion_jornada = "SELECT id_control_temperatura FROM entrega_turnos_control_temperatura
-        WHERE id_movil = ? AND fecha_registro = ?";
+        WHERE id_movil = ? AND fecha_registro >= ? LIMIT 1";
 
         $result_validacion_jornada = DB::connection()->select(DB::raw($query_validacion_jornada), [
             $request->id_movil,
