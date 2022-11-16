@@ -54,6 +54,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::controller(ListaTurnosController::class)->group(function () {
         Route::get('/getTurnosEntregados', 'getTurnosEntregados');
+        Route::get('/getAuxiliares', 'getAuxiliares');
+        Route::get('/getConductores', 'getConductores');
+        Route::get('/getMoviles', 'getMoviles');
     });
 });
 
