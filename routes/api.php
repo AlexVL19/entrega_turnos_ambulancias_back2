@@ -57,6 +57,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/getAuxiliares', 'getAuxiliares');
         Route::get('/getConductores', 'getConductores');
         Route::get('/getMoviles', 'getMoviles');
+        Route::post('/getNovedades', 'getNovedades');
+        Route::get('/getResponsesForNovedades', 'getResponsesForNovedades');
+        Route::post('/getFormulario', 'getFormulario');
     });
 });
 

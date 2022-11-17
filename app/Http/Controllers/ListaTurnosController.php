@@ -38,4 +38,36 @@ class ListaTurnosController extends Controller
 
         return $result_moviles;
     }
+
+    public function getNovedades(Request $request) {
+        $query_novedades = "SELECT id_verificacion_tipo, id_estado_verificacion, comentarios
+        FROM entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND comentarios IS NOT NULL";
+
+        $result_novedades = DB::connection()->select(DB::raw($query_novedades), [
+            $request->id_bitacora
+        ]);
+
+        return $result_novedades;
+    }
+
+    public function getResponsesForNovedades() {
+        $query_responses = "SELECT id_verificacion, estado_verificacion 
+        FROM entrega_turnos_verificacion_estado WHERE estado = 1";
+
+        $result_responses = DB::connection()->select(DB::raw($query_responses));
+
+        return $result_responses;
+    }
+
+    public function getFormulario(Request $request) {
+        $query_formulario = "SELECT id_verificacion_tipo, id_estado_verificacion, hay_comentarios, 
+        comentarios, valor, carga_inicial FROM entrega_turnos_verificacion_bitacora
+        WHERE id_bitacora = ?";
+
+        $result_formulario = DB::connection()->select(DB::raw($query_formulario), [
+            $request->id_bitacora
+        ]);
+
+        return $result_formulario;
+    }
 }
