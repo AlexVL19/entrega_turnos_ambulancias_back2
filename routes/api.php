@@ -60,6 +60,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/getNovedades', 'getNovedades');
         Route::get('/getResponsesForNovedades', 'getResponsesForNovedades');
         Route::post('/getFormulario', 'getFormulario');
+        Route::post('/consultarCargas', 'consultarCargas');
+        Route::post('/consultarAseo', 'consultarAseo');
+        Route::post('/consultarTemperaturas', 'consultarTemperaturas');
     });
 });
 

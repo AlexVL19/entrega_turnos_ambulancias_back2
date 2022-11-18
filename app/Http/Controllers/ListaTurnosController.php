@@ -70,4 +70,38 @@ class ListaTurnosController extends Controller
 
         return $result_formulario;
     }
+
+    public function consultarCargas(Request $request) {
+        $query_cargas = "SELECT id_verificacion_tipo, carga_inicial, carga_final 
+        FROM entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND carga_inicial IS NOT NULL
+        AND carga_final IS NOT NULL";
+
+        $result_cargas = DB::connection()->select(DB::raw($query_cargas), [
+            $request->id_bitacora
+        ]);
+
+        return $result_cargas;
+    }
+
+    public function consultarAseo(Request $request) {
+        $query_aseo = "SELECT id_tipo_producto, id_producto_aseo, utilizado 
+        FROM entrega_turnos_aseo_bitacora WHERE id_bitacora = ?";
+
+        $result_aseo = DB::connection()->select(DB::raw($query_aseo), [
+            $request->id_bitacora
+        ]);
+
+        return $result_aseo;
+    }
+
+    public function consultarTemperaturas(Request $request) {
+        $query_temperaturas = "SELECT temperatura_max, temperatura_min, humedad_max, humedad_min, jornada
+        FROM entrega_turnos_control_temperatura WHERE id_bitacora = ?";
+
+        $result_temperaturas = DB::connection()->select(DB::raw($query_temperaturas), [
+            $request->id_bitacora
+        ]);
+
+        return $result_temperaturas;
+    }
 }
