@@ -92,7 +92,7 @@ class FormularioController extends Controller
 
     public function insertIntoBitacora (Request $request) {
 
-        $validar_comentarios = false;
+        $validar_comentarios = 0;
 
         /* Validaciones que comprueban si cada campo cumple con las debidas reglas descritas aquí abajo: */ 
         $fields = $request->validate([
@@ -124,8 +124,8 @@ class FormularioController extends Controller
                     $request[$index]["carga"]
                     ]);
 
-                    if ($request[$index]["comentarios"] !== null) {
-                        $validar_comentarios = true;
+                    if ($request[$index]["activarComentario"] !== 0 && $request[$index]["comentarios"] !== null) {
+                        $validar_comentarios = 1;
                     }
                }
 
@@ -134,7 +134,7 @@ class FormularioController extends Controller
                    echo("Error en el índice" . $index);
                }
 
-               if ($validar_comentarios = true) {
+               if ($validar_comentarios == 1) {
                 $query_actualizar_novedades = "UPDATE entrega_turnos_bitacora SET novedades_formulario = 1 
                 WHERE id_bitacora = ?";
 
@@ -147,6 +147,7 @@ class FormularioController extends Controller
 
     public function getAmbulanceData ($id_movil) {
 
+        /* Consigue la fecha de vencimiento del último soat registrado de la móvil */
         $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_equipo = ? 
         ORDER BY id_soat DESC LIMIT 1";
 
@@ -154,6 +155,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue la última fecha de vencimiento del extintor de la móvil*/
         $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
         ORDER BY id_extintor DESC LIMIT 1";
 
@@ -161,6 +163,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue la última revisión tecnicomecánica en este móvil */
         $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_equipo = ? 
         ORDER BY id_tecnomecanica DESC LIMIT 1";
 
@@ -168,6 +171,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue el último cambio de hidráulica de la móvil */
         $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
         WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
@@ -175,6 +179,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue el último cambio de aceite realizado en la móvil */
         $query_cambios_aceite = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_motor 
         WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
 
@@ -182,6 +187,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue el último cambio de frenos de la móvil */
         $query_cambios_frenos = "SELECT fecha_ultimo_cambio FROM movil_cambios_frenos
         WHERE id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
 
@@ -189,6 +195,7 @@ class FormularioController extends Controller
             $id_movil
         ]);
 
+        /* Consigue el último cambio de suspensión de la móvil */
         $query_cambios_suspension = "SELECT fecha_ultimo_cambio FROM movil_cambios_suspension
         WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1"; 
 
@@ -363,6 +370,8 @@ class FormularioController extends Controller
         }
     }
 
+    /* Consigue aquellos equipos médicos que requieran carga, los cuales se pueden distinguir de entre
+    los demás si su carga inicial no es nula, además se usa el ID de la bitácora proveniente de un request */
     public function getEquiposConCarga(Request $request) {
         $query_equipos_carga = "SELECT id_verificacion_tipo, id_bitacora, carga_inicial FROM 
         entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND carga_inicial IS NOT NULL";
@@ -374,10 +383,12 @@ class FormularioController extends Controller
         return $result_equipos_carga;
     }
 
+    /* Asigna las cargas finales a la bitácora dependiendo de su ID de bitácora y de la verificación. */
     public function setCargasFinales(Request $request) {
 
         $query_cargas_finales = "UPDATE entrega_turnos_verificacion_bitacora SET carga_final = ? WHERE id_bitacora = ? AND id_verificacion_tipo = ?";
 
+        /* Recorre cada dispositivo con carga final y lo va asignando */
         foreach($request->all() as $carga) {
             $result_cargas_finales = DB::connection()->select(DB::raw($query_cargas_finales), [
                 $carga["carga_final"],
@@ -386,6 +397,7 @@ class FormularioController extends Controller
             ]);
         }
 
+        /* Actualiza la bandera indicando que el formulario ya se llenó */
         $query_actualizacion_bandera = "UPDATE entrega_turnos_bitacora SET formulario_cargas_llenado = 1 WHERE id_bitacora = ?";
 
         $result_actualizacion_bandera = DB::connection()->select(DB::raw($query_actualizacion_bandera), [
@@ -393,6 +405,8 @@ class FormularioController extends Controller
         ]);
     }
 
+    /* Consigue una config para determinar el nivel de batería que debe estar el equipo médico para que 
+    sea recomendable cargarlo. */
     public function getConfigs() {
         $query_configs = "SELECT value FROM configs WHERE id_config = 4 LIMIT 1";
 
@@ -401,6 +415,7 @@ class FormularioController extends Controller
         return $result_configs;
     }
 
+    /* Consigue los tipos de productos para aseo */
     public function getTiposProductosAseo() {
         $query_tipos_productos = "SELECT * FROM entrega_turnos_tipos_productos_aseo";
 
@@ -409,6 +424,7 @@ class FormularioController extends Controller
         return $result_tipos_productos;
     }
 
+    /* Consigue todos los productos de aseo que no estén inactivos */
     public function getProductosAseo() {
         $query_productos_aseo = "SELECT id_producto_aseo, producto, tipo_producto 
         FROM entrega_turnos_productos_aseo WHERE estado = 1";
@@ -418,10 +434,12 @@ class FormularioController extends Controller
         return $result_productos_aseo;
     }
 
+    /* Envía el formulario de aseo y desinfección, guardando los datos en una bitácora */
     public function enviarFormularioAseo(Request $request) {
         $query_bitacora_aseo = "INSERT INTO entrega_turnos_aseo_bitacora 
         (id_bitacora, id_tipo_producto, id_producto_aseo, utilizado) VALUES (?, ?, ?, ?)";
 
+        /* Recorre las respuestas, una a una, y va insertando */
         foreach($request->all() as $formulario) {
             $result_bitacora_aseo = DB::connection()->select(DB::raw($query_bitacora_aseo), [
                 $formulario["id_bitacora"],
@@ -431,6 +449,7 @@ class FormularioController extends Controller
             ]);
         }
 
+        /* Actualiza la bandera de aseo terminal, indicando al usuario que ese formulario ya fue llenado */
         $query_bandera_aseo = "UPDATE entrega_turnos_bitacora SET aseo_terminal = 1 WHERE id_bitacora = ?";
 
         $result_bandera_aseo = DB::connection()->select(DB::raw($query_bandera_aseo), [
@@ -438,15 +457,20 @@ class FormularioController extends Controller
         ]);
     }
 
+    /* Valida la jornada del formulario de temperatura de la siguiente manera: cuando haya un registro en
+    bitácora con el mismo ID de móvil y efectuado en la misma fecha, dicha jornada se pasa al de la tarde,
+    en cambio si no hay ninguno se pasa al de la mañana. */
     public function validarJornada(Request $request) {
         $query_validacion_jornada = "SELECT id_control_temperatura FROM entrega_turnos_control_temperatura
         WHERE id_movil = ? AND fecha_registro >= ? LIMIT 1";
 
+        /* Efectúa la query con la ID de la móvil y la fecha de hoy en formato yyyy-mm-dd */
         $result_validacion_jornada = DB::connection()->select(DB::raw($query_validacion_jornada), [
             $request->id_movil,
             date("Y-m-d")
         ]);
 
+        /* Si no encuentra ninguno, retorna 0, de lo contrario 1 */
         if (count($result_validacion_jornada) == 0) {
             return 0;
         }
@@ -456,6 +480,7 @@ class FormularioController extends Controller
         }
     }
 
+    /* Envía el formulario de temperaturas, de acuerdo con lo diligenciado en el formulario */
     public function enviarFormularioTemperatura(Request $request) {
         $query_insert_temperatura = "INSERT INTO entrega_turnos_control_temperatura 
         (id_bitacora, id_movil, temperatura_max, temperatura_min, humedad_max, humedad_min, jornada)
@@ -471,6 +496,7 @@ class FormularioController extends Controller
             $request->jornada
         ]);
 
+        /* Actualiza la bandera indicando que el formulario ya se llenó */
         $query_bandera_temperatura = "UPDATE entrega_turnos_bitacora SET formulario_temperatura_llenado = 1 WHERE id_bitacora = ?";
 
         $result_bandera_temperatura = DB::connection()->select(DB::raw($query_bandera_temperatura), [

@@ -84,6 +84,8 @@ class ListaTurnosController extends Controller
         return $result_formulario;
     }
 
+    /* Consulta el nivel de carga de los dispositivos pertenecientes a ese turno entregado, y asegura que
+    tanto la carga inicial como la final no estén nulos. */
     public function consultarCargas(Request $request) {
         $query_cargas = "SELECT id_verificacion_tipo, carga_inicial, carga_final 
         FROM entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND carga_inicial IS NOT NULL
@@ -175,10 +177,10 @@ class ListaTurnosController extends Controller
             }
 
             else {
-                $query_base .= " novedades_formulario = ?" . $request->novedades;
+                $query_base .= " novedades_formulario = " . $request->novedades;
             }
         }
 
-        return DB::connection()->select(DB::raw($query_base));
+        return $query_base;
     }
 }
