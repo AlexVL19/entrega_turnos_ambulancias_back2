@@ -70,3 +70,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 Route::controller(LoginController::class)->group(function () {
     Route::post('/login', 'authenticate');
 });
+
+Route::controller(ListaTurnosController::class)->group(function() {
+    Route::post('/exportarDatos', 'exportarDatos');
+});

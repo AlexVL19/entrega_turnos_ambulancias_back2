@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\TurnosExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ListaTurnosController extends Controller
 {
@@ -138,7 +140,7 @@ class ListaTurnosController extends Controller
             }
         }
 
-        if ($request->auxiliar) {
+        if (isset($request->auxiliar)) {
             if ($request->fecha_inicial || $request->fecha_final || $request->conductor || 
             $request->id_movil || $request->novedades) {
                 $query_base .= " AND id_auxiliar = " . $request->auxiliar;
@@ -148,7 +150,7 @@ class ListaTurnosController extends Controller
             }
         }
 
-        if ($request->conductor) {
+        if (isset($request->conductor)) {
             if ($request->fecha_inicial || $request->fecha_final || $request->auxiliar || 
             $request->id_movil || $request->novedades) {
                 $query_base .= " AND id_conductor = " . $request->conductor;
@@ -159,7 +161,7 @@ class ListaTurnosController extends Controller
             }
         }
 
-        if ($request->id_movil) {
+        if (isset($request->id_movil)) {
             if ($request->fecha_inicial || $request->fecha_final || $request->auxiliar || 
             $request->conductor || $request->novedades) {
                 $query_base .= " AND id_movil = " . $request->id_movil;
@@ -170,7 +172,7 @@ class ListaTurnosController extends Controller
             }
         }
 
-        if ($request->novedades) {
+        if (isset($request->novedades)) {
             if ($request->fecha_inicial || $request->fecha_final || $request->auxiliar || 
             $request->conductor || $request->id_movil) {
                 $query_base .= " AND novedades_formulario = " . $request->novedades;
@@ -181,6 +183,15 @@ class ListaTurnosController extends Controller
             }
         }
 
-        return $query_base;
+        return DB::connection()->select(DB::raw($query_base));
+    }
+
+    public function exportarDatos(Request $request) {
+
+        $array_datos = $request->except(['id_bitacora', 'foto_automotor', 'aseo_terminal', 'formulario_cargas_llenado', 'formulario_temperatura_llenado']);
+        
+        $datos_tabla = new TurnosExport($array_datos);
+
+        return Excel::download($datos_tabla, 'datos_tabla.xlsx');
     }
 }
