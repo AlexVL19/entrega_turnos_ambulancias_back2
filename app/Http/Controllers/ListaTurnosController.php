@@ -188,10 +188,27 @@ class ListaTurnosController extends Controller
 
     public function exportarDatos(Request $request) {
 
-        $array_datos = $request->except(['id_bitacora', 'foto_automotor', 'aseo_terminal', 'formulario_cargas_llenado', 'formulario_temperatura_llenado']);
+        $fecha_archivo = date('Y-m-d_H:i:s');
+
+        $array_datos = [];
+
+        foreach ($request->all() as $turno) {
+            array_push($array_datos, [
+                $turno["id_turno"],
+                $turno["id_movil"],
+                $turno["placa"],
+                $turno["id_auxiliar"],
+                $turno["id_conductor"],
+                $turno["comentarios_conductor"],
+                $turno["comentarios_auxiliar"],
+                $turno["comentarios_entregado"],
+                $turno["novedades_formulario"],
+                $turno["fecha_registro"],
+            ]);
+        }
         
         $datos_tabla = new TurnosExport($array_datos);
 
-        return Excel::download($datos_tabla, 'datos_tabla.xlsx');
+        return Excel::download($datos_tabla, 'reporte_turnos_entregados_' . $fecha_archivo . '.xlsx');
     }
 }
