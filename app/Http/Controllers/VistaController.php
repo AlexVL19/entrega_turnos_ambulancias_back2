@@ -41,7 +41,7 @@ class VistaController extends Controller {
                 array_push($lista_datos_vehiculo, $result_datos_vehiculo);
 
                 /* Consigue el nombre del turno cuyo ID coincida con el que se da como parámetro */
-                $query_datos_turno = "SELECT Turno, tiene_aseo FROM turnos WHERE id_Turno = ?";
+                $query_datos_turno = "SELECT Turno, tiene_aseo, jornada_temperatura FROM turnos WHERE id_Turno = ?";
 
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_auxiliar[$index]->Turno]);
