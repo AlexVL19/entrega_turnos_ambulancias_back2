@@ -13,15 +13,20 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class TurnosExport implements FromArray, WithHeadings, ShouldAutoSize, WithStyles {
     protected $datos_tabla;
 
+
+    /* Se instancia un constructor para que reciba un array de datos generado por un controlador o un 
+    modelo. */
     public function __construct(array $datos) {
         $this->datos_tabla = $datos;
     }
 
+    /* Se crea el documento con base a los datos ya recibidos */
     public function array(): array
     {
         return $this->datos_tabla;
     }
 
+    /* Se crea un array de encabezados dentro de esta función */
     public function headings(): array
     {
         return [
@@ -38,9 +43,12 @@ class TurnosExport implements FromArray, WithHeadings, ShouldAutoSize, WithStyle
         ];
     }
 
+    /* Se crea un array de estilos que permiten decorar el documento que ya hemos creado */
     public function styles(Worksheet $sheet) {
         return [
             
+            /* Para la fila 1 del documento, el texto estará en negrita, el color de las celdas será gris,
+            y los bordes rodearán toda la fila. */
             1 => [
                 'font' => [
                     'bold' => true

@@ -100,6 +100,8 @@ class ListaTurnosController extends Controller
         return $result_cargas;
     }
 
+    /* Consulta el reporte de aseo y desinfección cuyo id de bitácora coincida con el que se ha enviado.
+    Consigue todos los productos y si han sido utilizados o no. */
     public function consultarAseo(Request $request) {
         $query_aseo = "SELECT id_tipo_producto, id_producto_aseo, utilizado 
         FROM entrega_turnos_aseo_bitacora WHERE id_bitacora = ?";
@@ -111,6 +113,8 @@ class ListaTurnosController extends Controller
         return $result_aseo;
     }
 
+    /* Consulta el reporte de temperatura y humedad cuyo id de bitácora coincida con el que se ha enviado.
+    Consigue la temperatura máxima y mínima, y la humedad máxima y mínima. */
     public function consultarTemperaturas(Request $request) {
         $query_temperaturas = "SELECT temperatura_max, temperatura_min, humedad_max, humedad_min, jornada,
         id_movil, fecha_registro FROM entrega_turnos_control_temperatura WHERE id_bitacora = ?";
@@ -122,6 +126,9 @@ class ListaTurnosController extends Controller
         return $result_temperaturas;
     }
 
+    /* Filtra los turnos entregados que hay en bitácora mediante un concatenado de queries. En caso de que
+    alguno de los filtros contenga algún valor, y también si este valor viene en conjunto con otros valores,
+    se concatena con la query base. Cuando haya pasado por todas estas condiciones, se ejecuta la query. */
     public function filtroRegistros(Request $request) {
         $query_base = "SELECT * FROM entrega_turnos_bitacora WHERE";
 
@@ -186,12 +193,16 @@ class ListaTurnosController extends Controller
         return DB::connection()->select(DB::raw($query_base));
     }
 
+    /* Función que permite exportar los turnos que se muestran en el front (filtrados o no), a un documento
+    de Excel (.xlsx), ideal para reportes. */
     public function exportarDatos(Request $request) {
 
-        $fecha_archivo = date('Y-m-d_H:i:s');
+        $fecha_archivo = date('Y-m-d_H:i:s'); // Consigue la fecha actual para posteriomente concatenar
 
-        $array_datos = [];
+        $array_datos = []; // Array en el cual se van a leer los datos cuando se exporte a Excel
 
+        // Recorriendo todo lo que haya dentro del request, se pushea al array de datos para que sea legible
+        // por el exportador
         foreach ($request->all() as $turno) {
             array_push($array_datos, [
                 $turno["id_turno"],
@@ -207,8 +218,11 @@ class ListaTurnosController extends Controller
             ]);
         }
         
+        // Se llama al constructor que permite exportar los datos a Excel y le pasamos el array de datos
         $datos_tabla = new TurnosExport($array_datos);
 
+        /* Luego se devuelve el documento de Excel listo para descargar, en conjunto con el nombre y la
+        fecha del archivo. */
         return Excel::download($datos_tabla, 'reporte_turnos_entregados_' . $fecha_archivo . '.xlsx');
     }
 }

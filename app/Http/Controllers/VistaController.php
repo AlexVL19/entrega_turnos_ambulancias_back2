@@ -70,7 +70,7 @@ class VistaController extends Controller {
                     array_push($formulario_llenado, $result_form_llenado);
                 }
 
-                //Query que trae los comentarios del turno anterior **(EN PROCESO)**
+                //Query que trae los comentarios del turno anterior
                 $query_comentarios_anterior = "SELECT comentarios_entregado FROM entrega_turnos_bitacora WHERE
                 id_turno = ?";
 
@@ -86,6 +86,8 @@ class VistaController extends Controller {
 
                 array_push($datos_comentarios, $result_comentarios_anterior);
 
+                // Query que trae las banderas del turno anteriormente creado, e indica si el respectivo
+                // formulario fue llenado o no.
                 $query_banderas_formularios = "SELECT aseo_terminal, formulario_cargas_llenado, 
                 formulario_temperatura_llenado FROM entrega_turnos_bitacora WHERE id_turno = ?";
 
@@ -93,6 +95,7 @@ class VistaController extends Controller {
                     $result_aperturas_auxiliar[$index]->IdTurno
                 ]);
 
+                // Si no existe ninguna de estas banderas, se establecen a nulo
                 if (count($result_banderas_formularios) == 0) {
                     $result_banderas_formularios = json_encode([
                         "aseo_terminal" => null,
@@ -102,8 +105,6 @@ class VistaController extends Controller {
                 }
 
                 array_push($banderas_formularios, $result_banderas_formularios);
-
-
             }
 
             /* Agrupa todas esas respuestas en un JSON */
@@ -173,13 +174,52 @@ class VistaController extends Controller {
                     /* Cada coincidencia se guarda dentro del array */
                     array_push($formulario_llenado, $result_form_llenado);
                 }
+
+                //Query que trae los comentarios del turno anterior
+                $query_comentarios_anterior = "SELECT comentarios_entregado FROM entrega_turnos_bitacora WHERE
+                id_turno = ?";
+
+                $result_comentarios_anterior = DB::connection()->select(DB::raw($query_comentarios_anterior), [
+                    ($result_aperturas_conductor[$index]->IdTurno - 1)
+                ]);
+
+                if (count($result_comentarios_anterior) == 0) {
+                    $result_comentarios_anterior = json_encode([
+                        "comentarios_entregado" => null
+                    ]);
+                }
+
+                array_push($datos_comentarios, $result_comentarios_anterior);
+
+                // Query que trae las banderas del turno anteriormente creado, e indica si el respectivo
+                // formulario fue llenado o no.
+                $query_banderas_formularios = "SELECT aseo_terminal, formulario_cargas_llenado, 
+                formulario_temperatura_llenado FROM entrega_turnos_bitacora WHERE id_turno = ?";
+
+                $result_banderas_formularios = DB::connection()->select(DB::raw($query_banderas_formularios), [
+                    $result_aperturas_conductor[$index]->IdTurno
+                ]);
+
+                // Si no existe ninguna de estas banderas, se establecen a nulo
+                if (count($result_banderas_formularios) == 0) {
+                    $result_banderas_formularios = json_encode([
+                        "aseo_terminal" => null,
+                        "formulario_cargas_llenado" => null,
+                        "formulario_temperatura_llenado" => null
+                    ]);
+                }
+
+                array_push($banderas_formularios, $result_banderas_formularios);
             }
 
             /* Agrupa todas esas respuestas en un JSON */
             return response(json_encode([
                 "datos_turno" => $result_aperturas_conductor,
                 "datos_vehiculo" => $lista_datos_vehiculo,
-                "tipo_turno" => $lista_datos_turno
+                "tipo_turno" => $lista_datos_turno,
+                "formulario_llenado" => $formulario_llenado,
+                "banderas_llenados" => $banderas_formularios,
+                "comentarios_anterior" => $datos_comentarios
             ]));
         }
 

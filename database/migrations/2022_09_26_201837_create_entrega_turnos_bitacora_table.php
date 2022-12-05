@@ -15,18 +15,22 @@ class CreateEntregaTurnosBitacoraTable extends Migration
     {
         Schema::create('entrega_turnos_bitacora', function (Blueprint $table) {
             $table->id('id_bitacora');
-            $table->foreignId('id_turno')->references('IdTurno')->on('servicio_turnos_aperturas')->onDelete('cascade');
-            $table->foreignId('id_movil')->references('VEHCOD')->on('equipos')->onDelete('cascade');
-            $table->string('movil');
+            $table->foreignId('id_turno')->references('Id_Hora')->on('htrabajadas')->onDelete('cascade');
+            $table->foreignId('id_movil')->references('ID_Equipo')->on('equipos')->onDelete('cascade');
             $table->string('placa');
             $table->foreignId('id_auxiliar')->references('Cod_Aux')->on('auxiliares')->onDelete('cascade');
             $table->foreignId('id_conductor')->references('Cod_Con')->on('conductores')->onDelete('cascade');
-            $table->foreignId('id_medico')->references('Cod_Med')->on('medicos')->onDelete('cascade');
             $table->tinyInteger('danos_automotor');
             $table->string('foto_automotor')->nullable();
-            $table->string('comentarios_conductor')->nullable();
-            $table->string('comentarios_auxiliar')->nullable();
-            $table->string('comentarios_recibido')->nullable();
+            $table->text('comentarios_conductor')->nullable();
+            $table->text('comentarios_auxiliar')->nullable();
+            $table->tinyInteger('formulario_llenado')->default(1);
+            $table->tinyInteger('novedades_formulario')->default(0);
+            $table->text('comentarios_entregado')->nullable();
+            $table->tinyInteger('aseo_terminal')->default(0);
+            $table->tinyInteger('formulario_cargas_llenado')->default(0);
+            $table->tinyInteger('formulario_temperatura_llenado')->default(0);
+            $table->tinyInteger('estado_novedades')->default(0);
             $table->timestamps();
         });
     }
