@@ -41,6 +41,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/enviarFormularioAseo', 'enviarFormularioAseo');
         Route::post('/enviarFormularioTemp', 'enviarFormularioTemperatura');
         Route::post('/validarJornada', 'validarJornada');
+        Route::post('/insertNovedades', 'insertarNovedad');
     });
 
     Route::controller(LoginController::class)->group(function () {

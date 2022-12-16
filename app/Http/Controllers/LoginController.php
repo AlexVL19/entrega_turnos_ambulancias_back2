@@ -62,7 +62,7 @@ class LoginController extends Controller
              == $autenticacion_conductor->password) {
 
                 //Crea un token que será validado al entrar en cada ruta
-                $token = $autenticacion_auxiliar->createToken('apitoken')->plainTextToken;
+                $token = $autenticacion_conductor->createToken('apitoken')->plainTextToken;
 
                  //Devuelve una respuesta con la información solicitada antes en la query de autenticación
                  return response([

@@ -295,8 +295,13 @@ class FormularioController extends Controller
                 $fields["comentarios_auxiliar"],
             ]);
 
-            //Una vez ejecutada la query, recoge su id y la devuelve como respuesta
-            return DB::getPdo()->lastInsertId();
+            $query_ultima_bitacora = "SELECT * FROM entrega_turnos_bitacora ORDER BY fecha_registro 
+            DESC LIMIT 1";
+
+            $result_ultima_bitacora = DB::connection()->select(DB::raw($query_ultima_bitacora));
+
+            //Devuelve el registro de la última query que ejecutó
+            return $result_ultima_bitacora;
         }
 
         //En cambio, si es un conductor
@@ -357,8 +362,13 @@ class FormularioController extends Controller
                 $fields["comentarios_conductor"],
             ]);
 
-            //Devuelve el último ID de la última query que ejecutó
-            return DB::getPdo()->lastInsertId();
+            $query_ultima_bitacora = "SELECT * FROM entrega_turnos_bitacora ORDER BY fecha_registro 
+            DESC LIMIT 1";
+
+            $result_ultima_bitacora = DB::connection()->select(DB::raw($query_ultima_bitacora));
+
+            //Devuelve el registro de la última query que ejecutó
+            return $result_ultima_bitacora;
         }
 
         else {
@@ -502,6 +512,22 @@ class FormularioController extends Controller
 
         $result_bandera_temperatura = DB::connection()->select(DB::raw($query_bandera_temperatura), [
             $request->id_bitacora
+        ]);
+    }
+
+    public function insertarNovedad(Request $request) {
+        $query_insert_novedad = "INSERT INTO entrega_turnos_novedades_bitacora 
+        (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, comentarios_novedad) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
+            $request->id_bitacora,
+            $request->id_turno,
+            $request->id_movil,
+            $request->id_auxiliar,
+            $request->id_conductor,
+            $request->id_verificacion_tipo,
+            $request->comentarios_novedad
         ]);
     }
 }
