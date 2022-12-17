@@ -6,6 +6,7 @@ use App\Http\Controllers\FormularioController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\VistaController;
 use App\Http\Controllers\ListaTurnosController;
+use App\Http\Controllers\NovedadesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/consultarAseo', 'consultarAseo');
         Route::post('/consultarTemperaturas', 'consultarTemperaturas');
         Route::post('/filtrarRegistros', 'filtroRegistros');
+    });
+
+    Route::controller(NovedadesController::class)->group(function () {
+        Route::get('/getNovedades', 'getNovedades');
     });
 });
 

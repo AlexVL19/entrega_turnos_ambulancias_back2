@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\DB;
 class NovedadesController extends Controller
 {
     public function getNovedades() {
-        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora";
+        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2";
+
+        $result_novedades = DB::connection()->select(DB::raw($query_novedades));
+
+        return $result_novedades;
     }
 }
