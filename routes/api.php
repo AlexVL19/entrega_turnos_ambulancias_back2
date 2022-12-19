@@ -70,6 +70,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::controller(NovedadesController::class)->group(function () {
         Route::get('/getNovedades', 'getNovedades');
+        Route::get('/getVerifsNovedades', 'getVerificacionesNovedades');
+        Route::post('/getTurno', 'findTurno');
     });
 });
 
