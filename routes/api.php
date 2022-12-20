@@ -72,6 +72,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/getNovedades', 'getNovedades');
         Route::get('/getVerifsNovedades', 'getVerificacionesNovedades');
         Route::post('/getTurno', 'findTurno');
+        Route::post('/enviarDatosRevision', 'enviarDatosCambio');
+        Route::get('/getCategoriasNovedad', 'getCategoriasNovedad');
     });
 });
 

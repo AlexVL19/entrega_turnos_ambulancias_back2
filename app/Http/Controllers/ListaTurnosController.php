@@ -116,7 +116,7 @@ class ListaTurnosController extends Controller
     /* Consulta el reporte de temperatura y humedad cuyo id de bitácora coincida con el que se ha enviado.
     Consigue la temperatura máxima y mínima, y la humedad máxima y mínima. */
     public function consultarTemperaturas(Request $request) {
-        $query_temperaturas = "SELECT temperatura_max, temperatura_min, humedad_max, humedad_min, jornada,
+        $query_temperaturas = "SELECT temperatura_max, temperatura_min, humedad, jornada,
         id_movil, fecha_registro FROM entrega_turnos_control_temperatura WHERE id_bitacora = ?";
 
         $result_temperaturas = DB::connection()->select(DB::raw($query_temperaturas), [
