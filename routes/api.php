@@ -74,6 +74,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/getTurno', 'findTurno');
         Route::post('/enviarDatosRevision', 'enviarDatosCambio');
         Route::get('/getCategoriasNovedad', 'getCategoriasNovedad');
+        Route::get('/getMovilesNovedad', 'getMovilesNovedad');
+        Route::post('/filtrarNovedades', 'filtro');
     });
 });
 
@@ -83,4 +85,8 @@ Route::controller(LoginController::class)->group(function () {
 
 Route::controller(ListaTurnosController::class)->group(function() {
     Route::post('/exportarDatos', 'exportarDatos');
+});
+
+Route::controller(NovedadesController::class)->group(function() {
+    Route::post('/exportarNovedades', 'exportarDatos');
 });

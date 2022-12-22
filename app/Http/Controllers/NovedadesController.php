@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\NovedadesExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class NovedadesController extends Controller {
 
@@ -100,5 +102,80 @@ class NovedadesController extends Controller {
         $result_categorias = DB::connection()->select(DB::raw($query_categorias));
 
         return $result_categorias;
+    }
+
+    public function getMovilesNovedad() {
+        $query_moviles = "SELECT VEHNOM AS nombre, ID_Equipo AS id_equipo FROM equipos";
+
+        $result_moviles = DB::connection()->select(DB::raw($query_moviles));
+
+        return $result_moviles;
+    }
+
+    public function filtro(Request $request) {
+        $query_base_buscar_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE ";
+        $query_base_categorias = "";
+
+        if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
+            $query_base_buscar_novedades .= "fecha_creacion BETWEEN "
+             . $request->fecha_inicial . " AND " . $request->fecha_final;
+        }
+
+        if (isset($request->movil)) {
+            $query_base_buscar_novedades .= " AND id_movil = " . $request->movil;
+        }
+
+        if (isset($request->categoria)) {
+            $query_base_categorias .= "SELECT * FROM entrega_turnos_categoria_verificacion 
+            WHERE id_categoria_verificacion = " . $request->categoria;
+        }
+
+        if ($query_base_buscar_novedades !== "") {
+            $result_buscar_novedades = DB::connection()->select(DB::raw($query_base_buscar_novedades));
+        }
+
+        if ($query_base_categorias !== "") {
+            $result_buscar_categorias = DB::connection()->select(DB::raw($query_base_categorias));
+        }
+
+        if ($result_buscar_novedades && !$result_buscar_categorias) {
+            return response(json_encode([
+                "novedades" => $result_buscar_novedades
+            ]));
+        }
+
+        else if ($result_buscar_novedades && $result_buscar_categorias) {
+            return response(json_encode([
+                "novedades" => $result_buscar_novedades,
+                "categorias" => $result_buscar_categorias
+            ]));
+        }
+    }
+
+    public function exportarDatos(Request $request) {
+
+        $fecha_archivo = date('Y-m-d_H:i:s');
+
+        $array_datos = [];
+
+        foreach ($request->all() as $novedad) {
+            array_push($array_datos, [
+                $novedad["id_movil"],
+                $novedad["id_turno"],
+                $novedad["fecha_creacion"],
+                $novedad["auxiliar"],
+                $novedad["conductor"],
+                $novedad["verificacion"],
+                $novedad["categoria"],
+                $novedad["comentario_nov"],
+                $novedad["estado_revision"],
+                $novedad["fecha_ultima_revision"],
+                $novedad["nota_revision"]
+            ]);
+        }
+
+        $datos_tabla = new NovedadesExport($array_datos);
+
+        return Excel::download($datos_tabla, 'reporte_novedades_' . $fecha_archivo . '.xlsx');
     }
 }
