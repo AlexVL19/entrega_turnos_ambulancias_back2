@@ -5,12 +5,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Exports\NovedadesExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 
 class NovedadesController extends Controller {
     
     /* Consigue todas las novedades de todos los formularios que no estén revisadas */
     public function getNovedades() {
-        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2";
+        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2 ORDER BY id_categoria_verificacion";
 
         $result_novedades = DB::connection()->select(DB::raw($query_novedades));
 
@@ -52,19 +53,20 @@ class NovedadesController extends Controller {
     a una bitácora de cambios en donde se registra el cambio realizado. */
     public function enviarDatosCambio(Request $request) {
 
+        $ruta_imagen = null;
+
         $query_actualizacion_bitacora = ""; //Se inicializa un string de query
 
         /* Si el estado nuevo es "revisando", actualiza el registro en bitácora con su estado nuevo, la fecha de su última revisión,
         la nota que es opcional y un archivo adjunto el cual también es opcional. */
         if ($request->estado_nuevo == 1) {
             $query_actualizacion_bitacora = "UPDATE entrega_turnos_novedades_bitacora SET 
-            estado_revision = ?, fecha_revisando = ?, nota_revision = ?, imagen_adjunta = ? WHERE id_novedad = ?";
+            estado_revision = ?, fecha_revisando = ?, nota_revision = ? WHERE id_novedad = ?";
 
             $result_actualizacion_bitacora = DB::connection()->select(DB::raw($query_actualizacion_bitacora), [
                 $request->estado_nuevo,
                 NOW(),
                 $request->nota_revision,
-                $request->archivo_adjunto,
                 $request->id_novedad
             ]);
 
@@ -74,12 +76,28 @@ class NovedadesController extends Controller {
             (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
             (?, ?, ?, ?, ?)";
 
+            if ($request->hasFile('archivo_adjunto')) {
+                
+                $archivo = $request->file('archivo_adjunto');
+
+                $nombre_archivo = $archivo->getClientOriginalName();
+
+                $extension_archivo = $archivo->getClientOriginalExtension();
+
+                $fecha_carpeta = date("Y-m-d");
+
+                $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
+                '_' . $fecha_carpeta . '/' . $nombre_archivo . $extension_archivo;
+
+                Storage::put($ruta_imagen, $archivo);
+            }
+
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
-                $request->archivo_adjunto
+                $ruta_imagen
             ]);
         }
         
@@ -87,13 +105,12 @@ class NovedadesController extends Controller {
         campo. */
         else if ($request->estado_nuevo == 2) {
             $query_actualizacion_bitacora = "UPDATE entrega_turnos_novedades_bitacora SET 
-            estado_revision = ?, fecha_revision = ?, nota_revision = ?, imagen_adjunta = ? WHERE id_novedad = ?";
+            estado_revision = ?, fecha_revision = ?, nota_revision = ? WHERE id_novedad = ?";
 
             $result_actualizacion_bitacora = DB::connection()->select(DB::raw($query_actualizacion_bitacora), [
                 $request->estado_nuevo,
                 NOW(),
                 $request->nota_revision,
-                $request->archivo_adjunto,
                 $request->id_novedad
             ]);
 
@@ -101,12 +118,27 @@ class NovedadesController extends Controller {
             (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
             (?, ?, ?, ?, ?)";
 
+            if (isset($request->archivo_adjunto)) {
+                $archivo = $request->file('archivo_adjunto');
+
+                $nombre_archivo = $archivo->getClientOriginalName();
+
+                $extension_archivo = $archivo->getClientOriginalExtension();
+
+                $fecha_carpeta = date("Y-m-d");
+
+                $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
+                '_' . $fecha_carpeta . '/' . $nombre_archivo . $extension_archivo;
+
+                Storage::put($ruta_imagen, $archivo);
+            }
+
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
-                $request->archivo_adjunto
+                $ruta_imagen
             ]);
         }
     }
@@ -133,12 +165,14 @@ class NovedadesController extends Controller {
     fragmento de query. Luego se envía la petición una vez todas las condicionales hayan sido evaluadas. */
     public function filtro(Request $request) {
         $query_base_buscar_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE "; //Se instancia una query base, que seleccionará todos los campos de la bitácora de novedades
-        $query_base_categorias = ""; //Se instancia una query base en caso de que se quiera buscar por una categoría específica.
+        $query_base_categorias = null; //Se instancia una query base en caso de que se quiera buscar por una categoría específica.
+
+        $result_buscar_novedades = null;
 
         /* Si existen tanto fecha inicial como final en la petición, se añade el pedazo de query a la query base.*/
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
-            $query_base_buscar_novedades .= "fecha_creacion BETWEEN "
-             . $request->fecha_inicial . " AND " . $request->fecha_final;
+            $query_base_buscar_novedades .= "fecha_creacion BETWEEN " .
+            "'" . $request->fecha_inicial . "'" . " AND " . "'" . $request->fecha_final . "'";
         }
 
         /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
@@ -148,34 +182,12 @@ class NovedadesController extends Controller {
 
         /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
         if (isset($request->categoria)) {
-            $query_base_categorias .= "SELECT * FROM entrega_turnos_categoria_verificacion 
-            WHERE id_categoria_verificacion = " . $request->categoria;
+            $query_base_buscar_novedades .= " AND id_categoria_verificacion = " . $request->categoria . " ORDER BY id_categoria_verificacion";
         }
+        
+        $result_buscar_novedades = DB::connection()->select(DB::raw($query_base_buscar_novedades));
 
-        /* Si la query base para novedades no está vacía, se ejecuta */
-        if ($query_base_buscar_novedades !== "") {
-            $result_buscar_novedades = DB::connection()->select(DB::raw($query_base_buscar_novedades));
-        }
-
-        /* Si la query base para categorías no está vacía, se ejecuta */
-        if ($query_base_categorias !== "") {
-            $result_buscar_categorias = DB::connection()->select(DB::raw($query_base_categorias));
-        }
-
-        /* Si un resultado existe pero el otro no, se devuelve un JSON con la respuesta */
-        if ($result_buscar_novedades && !$result_buscar_categorias) {
-            return response(json_encode([
-                "novedades" => $result_buscar_novedades
-            ]));
-        }
-
-        /* De lo contrario, se devuelve un JSON con ambas. */
-        else if ($result_buscar_novedades && $result_buscar_categorias) {
-            return response(json_encode([
-                "novedades" => $result_buscar_novedades,
-                "categorias" => $result_buscar_categorias
-            ]));
-        }
+        return $result_buscar_novedades;
     }
 
     /* Función la cual se exportan los datos que se traen por petición a un .xlsx, un documento de Excel, ideal para reportes */

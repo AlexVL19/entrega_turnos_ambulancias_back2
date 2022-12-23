@@ -108,8 +108,8 @@ class FormularioController extends Controller
 
                /* Por cada posición, hace una query para insertar */
                $query_insert = "INSERT INTO entrega_turnos_verificacion_bitacora 
-               (id_bitacora, id_verificacion_tipo, id_estado_verificacion, hay_comentarios, comentarios, valor, carga_inicial)
-               VALUES (?, ?, ?, ?, ?, ?, ?)";
+               (id_bitacora, id_verificacion_tipo, id_categoria_verificacion, id_estado_verificacion, hay_comentarios, comentarios, valor, carga_inicial)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                /* Si el índice existe, la query se ejecuta tomando todos los valores existentes en
                   la posición actual */
@@ -117,6 +117,7 @@ class FormularioController extends Controller
                    DB::connection()->select(DB::raw($query_insert), [
                     $request[$index]["id_bitacora_turnos"], 
                     $request[$index]["id_tipo_verificacion"],
+                    $request[$index]["id_categoria_verificacion"],
                     $request[$index]["id_estado_verificacion"],
                     $request[$index]["activarComentario"], 
                     $request[$index]["comentarios"],
@@ -518,8 +519,8 @@ class FormularioController extends Controller
     del formulario tiene algún comentario se añade aquí también. */
     public function insertarNovedad(Request $request) {
         $query_insert_novedad = "INSERT INTO entrega_turnos_novedades_bitacora 
-        (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, comentarios_novedad) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
+        (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, id_categoria_verificacion, comentarios_novedad) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
             $request->id_bitacora,
@@ -528,6 +529,7 @@ class FormularioController extends Controller
             $request->id_auxiliar,
             $request->id_conductor,
             $request->id_verificacion_tipo,
+            $request->id_categoria_verificacion,
             $request->comentarios_novedad
         ]);
     }
