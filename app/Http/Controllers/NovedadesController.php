@@ -7,7 +7,8 @@ use App\Exports\NovedadesExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class NovedadesController extends Controller {
-
+    
+    /* Consigue todas las novedades de todos los formularios que no estén revisadas */
     public function getNovedades() {
         $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2";
 
@@ -16,6 +17,8 @@ class NovedadesController extends Controller {
         return $result_novedades;
     }
 
+    /* Consigue las verificaciones con las cuales se trabajan en el formulario. Esto con el propósito de añadir legiblidad en donde
+    se va a utilizar */
     public function getVerificacionesNovedades() {
         $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion
         FROM entrega_turnos_verificacion_tipo WHERE estado = 1";
@@ -25,15 +28,17 @@ class NovedadesController extends Controller {
         return $result_verificaciones;
     }
 
+    /* Consigue el nombre del turno el cual fue asignado anteriormente en htabajadas. Consiguiendo el ID del turno en htrabajadas
+    podemos discernir el nombre del turno y traerlo */
     public function findTurno(Request $request) {
-        $query_htrabajadas = "SELECT Turno FROM htrabajadas WHERE Id_Hora = ? LIMIT 1";
+        $query_htrabajadas = "SELECT Turno FROM htrabajadas WHERE Id_Hora = ? LIMIT 1"; // Consigue el ID del turno en htrabajadas
 
         $result_htrabajadas = DB::connection()->select(DB::raw($query_htrabajadas), [
             $request->data
         ]);
 
         foreach ($result_htrabajadas as $turno) {
-            $query_turnos = "SELECT Turno FROM turnos WHERE id_Turno = ?";
+            $query_turnos = "SELECT Turno FROM turnos WHERE id_Turno = ?"; // Consigue el nombre del turno con base al ID de turno anterior
 
             $result_turnos = DB::connection()->select(DB::raw($query_turnos), [
                 $turno->Turno
@@ -43,10 +48,14 @@ class NovedadesController extends Controller {
         return $result_turnos;
     }
 
+    /* Envía los datos del cambio de revisión. Estos datos se envían tanto a la bitácora de novedades, en donde se actualiza, y
+    a una bitácora de cambios en donde se registra el cambio realizado. */
     public function enviarDatosCambio(Request $request) {
 
-        $query_actualizacion_bitacora = "";
+        $query_actualizacion_bitacora = ""; //Se inicializa un string de query
 
+        /* Si el estado nuevo es "revisando", actualiza el registro en bitácora con su estado nuevo, la fecha de su última revisión,
+        la nota que es opcional y un archivo adjunto el cual también es opcional. */
         if ($request->estado_nuevo == 1) {
             $query_actualizacion_bitacora = "UPDATE entrega_turnos_novedades_bitacora SET 
             estado_revision = ?, fecha_revisando = ?, nota_revision = ?, imagen_adjunta = ? WHERE id_novedad = ?";
@@ -59,6 +68,8 @@ class NovedadesController extends Controller {
                 $request->id_novedad
             ]);
 
+            /* Luego se agrega el cambio en la bitácora de cambios, en donde se registra su estado antiguo y su estado nuevo, 
+            la nota de revisión y su archivo adjunto, el cual son opcionales. */
             $query_agregar_cambio = "INSERT INTO entrega_turnos_novedades_bitacora_cambios 
             (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
             (?, ?, ?, ?, ?)";
@@ -70,7 +81,11 @@ class NovedadesController extends Controller {
                 $request->nota_revision,
                 $request->archivo_adjunto
             ]);
-        } else if ($request->estado_nuevo == 2) {
+        }
+        
+        /* En cambio, si el estado es 'revisado', el único cambio que se hace es que guarda la última fecha de revisión en su respectivo
+        campo. */
+        else if ($request->estado_nuevo == 2) {
             $query_actualizacion_bitacora = "UPDATE entrega_turnos_novedades_bitacora SET 
             estado_revision = ?, fecha_revision = ?, nota_revision = ?, imagen_adjunta = ? WHERE id_novedad = ?";
 
@@ -96,6 +111,7 @@ class NovedadesController extends Controller {
         }
     }
 
+    /* Consigue las categorías de cada verificación, utilizados durante el formulario de entrega de turnos. */
     public function getCategoriasNovedad() {
         $query_categorias = "SELECT * FROM entrega_turnos_categoria_verificacion";
 
@@ -104,6 +120,7 @@ class NovedadesController extends Controller {
         return $result_categorias;
     }
 
+    /* Consigue la lista de equipos disponibles. */
     public function getMovilesNovedad() {
         $query_moviles = "SELECT VEHNOM AS nombre, ID_Equipo AS id_equipo FROM equipos";
 
@@ -112,38 +129,47 @@ class NovedadesController extends Controller {
         return $result_moviles;
     }
 
+    /* Filtra registros mediante un concatenado de queries. Si un parámetro por el cual vamos a filtrar existe, se añade ese
+    fragmento de query. Luego se envía la petición una vez todas las condicionales hayan sido evaluadas. */
     public function filtro(Request $request) {
-        $query_base_buscar_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE ";
-        $query_base_categorias = "";
+        $query_base_buscar_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE "; //Se instancia una query base, que seleccionará todos los campos de la bitácora de novedades
+        $query_base_categorias = ""; //Se instancia una query base en caso de que se quiera buscar por una categoría específica.
 
+        /* Si existen tanto fecha inicial como final en la petición, se añade el pedazo de query a la query base.*/
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
             $query_base_buscar_novedades .= "fecha_creacion BETWEEN "
              . $request->fecha_inicial . " AND " . $request->fecha_final;
         }
 
+        /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
         if (isset($request->movil)) {
             $query_base_buscar_novedades .= " AND id_movil = " . $request->movil;
         }
 
+        /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
         if (isset($request->categoria)) {
             $query_base_categorias .= "SELECT * FROM entrega_turnos_categoria_verificacion 
             WHERE id_categoria_verificacion = " . $request->categoria;
         }
 
+        /* Si la query base para novedades no está vacía, se ejecuta */
         if ($query_base_buscar_novedades !== "") {
             $result_buscar_novedades = DB::connection()->select(DB::raw($query_base_buscar_novedades));
         }
 
+        /* Si la query base para categorías no está vacía, se ejecuta */
         if ($query_base_categorias !== "") {
             $result_buscar_categorias = DB::connection()->select(DB::raw($query_base_categorias));
         }
 
+        /* Si un resultado existe pero el otro no, se devuelve un JSON con la respuesta */
         if ($result_buscar_novedades && !$result_buscar_categorias) {
             return response(json_encode([
                 "novedades" => $result_buscar_novedades
             ]));
         }
 
+        /* De lo contrario, se devuelve un JSON con ambas. */
         else if ($result_buscar_novedades && $result_buscar_categorias) {
             return response(json_encode([
                 "novedades" => $result_buscar_novedades,
@@ -152,12 +178,14 @@ class NovedadesController extends Controller {
         }
     }
 
+    /* Función la cual se exportan los datos que se traen por petición a un .xlsx, un documento de Excel, ideal para reportes */
     public function exportarDatos(Request $request) {
 
-        $fecha_archivo = date('Y-m-d_H:i:s');
+        $fecha_archivo = date('Y-m-d_H:i:s'); //Se instancia un date en formato yyyy-mm-dd hh:mm:ss
 
-        $array_datos = [];
+        $array_datos = []; //Se instancia un array de datos vacío
 
+        /* Se recorre cada elemento de la petición y luego se añade al array vacío instanciado anteriormente */
         foreach ($request->all() as $novedad) {
             array_push($array_datos, [
                 $novedad["id_movil"],
@@ -174,8 +202,10 @@ class NovedadesController extends Controller {
             ]);
         }
 
+        /* Se llama al constructor del exportador y se pasa el array de datos */
         $datos_tabla = new NovedadesExport($array_datos);
 
+        /* Devuelve un descargable, junto con los datos de la tabla y el nombre del archivo */
         return Excel::download($datos_tabla, 'reporte_novedades_' . $fecha_archivo . '.xlsx');
     }
 }

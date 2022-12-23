@@ -514,6 +514,8 @@ class FormularioController extends Controller
         ]);
     }
 
+    /* Inserta una novedad cada vez que se presenta una al enviar el formulario. Mientras procesa la información, si una verificación
+    del formulario tiene algún comentario se añade aquí también. */
     public function insertarNovedad(Request $request) {
         $query_insert_novedad = "INSERT INTO entrega_turnos_novedades_bitacora 
         (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, comentarios_novedad) 
