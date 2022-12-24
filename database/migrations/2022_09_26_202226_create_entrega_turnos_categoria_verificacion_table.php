@@ -16,7 +16,6 @@ class CreateEntregaTurnosCategoriaVerificacionTable extends Migration
         Schema::create('entrega_turnos_categoria_verificacion', function (Blueprint $table) {
             $table->id('id_categoria_verificacion');
             $table->string('categoria_verificacion');
-            $table->timestamps();
         });
     }
 

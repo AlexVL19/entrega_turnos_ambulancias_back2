@@ -14,30 +14,49 @@ class EntregaTurnosSeed extends Seeder
      */
     public function run()
     {
-        //Sección la cual inserta en entrega_turnos_bitacora
-        DB::insert('INSERT INTO entrega_turnos_bitacora (id_turno, id_movil, movil, placa, id_auxiliar, 
-        id_conductor, id_medico, danos_automotor, comentarios_conductor, comentarios_auxiliar, comentarios_recibido)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ['1', '1', 'ALSKSW', 'WPD198', '1', '1', '1', '0', 'Prueba1', 'Prueba2', 'Prueba Recibido']);
+        $prefix = 'csv'; //Prefijo de los archivos que se van a usar en esta seeder
 
-        //Sección en la cual se insertan datos de prueba en categorías de verificación
-        DB::insert('INSERT INTO entrega_turnos_categoria_verificacion (categoria_verificacion) VALUES (?)',
-        ['Prueba Verificación']);
+        /* Array de tablas las cuales se van a llenar, viene con su respectivo archivo del cual se va a leer
+        y las columnas de las cuales se van a insertar. Se pueden poner cuantas tablas se prefiera */
+        $tables = [
+            'entrega_turnos_categorias_selecciones' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_categorias_selecciones.csv',
+                'columns' => 'id_seleccion, categoria_seleccion'
+            ],
 
-        //Sección en la cual se insertan datos de prueba en categorías de selección/respuestas
-        DB::insert('INSERT INTO entrega_turnos_categorias_selecciones (categoria_seleccion) VALUES (?)',
-        ['Prueba selección']);
+            'entrega_turnos_categoria_verificacion' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_categoria_verificacion.csv',
+                'columns' => 'id_categoria_verificacion, categoria_verificacion'
+            ],
 
-        //Sección en la cual se insertan datos de prueba en estados de verificación
-        DB::insert('INSERT INTO entrega_turnos_verificacion_estado (estado_verificacion, id_categoria_respuesta,
-        estado) VALUES (?, ?, ?)', ['Bueno', '1', '1']);
+            'entrega_turnos_tipos_productos_aseo' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_tipos_productos_aseo.csv',
+                'columns' => 'id_tipo_producto, tipo_producto'
+            ],
 
-        //Sección en la cual inserta datos de prueba en tipos de verificación
-        DB::insert('INSERT INTO entrega_turnos_verificacion_tipo (tipo_verificacion, id_categoria_verificacion,
-        estado, es_automovil, es_ambulancia) VALUES (?, ?, ?, ?, ?)', ['Verificación 1', '1', '1', '1', '0']);
+            'entrega_turnos_productos_aseo' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_productos_aseo.csv',
+                'columns' => 'id_producto_aseo, producto, tipo_producto, estado'
+            ],
 
-        //Sección en la cual inserta datos en la bitácora de verificaciones
-        DB::insert('INSERT INTO entrega_turnos_verificacion_bitacora (id_bitacora, id_verificacion_tipo,
-        id_estado_verificacion, comentarios, valor) VALUES (?, ?, ?, ?, ?)', ['1', '1', '1', 'Ninguno', '3000']);
+            'entrega_turnos_verificacion_estado' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_verificacion_estado.csv',
+                'columns' => 'id_verificacion, estado_verificacion, id_categoria_respuesta, estado'
+            ],
+
+            'entrega_turnos_verificacion_tipo' => [
+                'file' => 'csv' . DIRECTORY_SEPARATOR . 'entrega_turnos_verificacion_tipo.csv',
+                'columns' => 'id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, estado, tipo_movil, tiene_carga, requiere_valores'
+            ]
+        ];
+
+
+        /* Luego, se recorre cada tabla y entabla una conexión de MySQL que indique que, los datos del 
+        archivo especificado en esa iteración se van a insertar en la tabla correspondiente. Cabe 
+        destacar que también se establecen parámetros adicionales al leer para que se ajuste a la sintaxis
+        que ofrecen los .csv */
+        foreach ($tables as $key => $table) {
+            DB::connection()->getpdo()->exec("LOAD DATA LOCAL INFILE '" . str_replace(DIRECTORY_SEPARATOR, '/', public_path($prefix . DIRECTORY_SEPARATOR . "{$key}.{$prefix}" . "'" . " INTO TABLE " . $key  . " FIELDS TERMINATED BY ',' ENCLOSED BY '" . '"' . "' LINES TERMINATED BY '\r\n' IGNORE 1 LINES")));
+        }
     }
 }

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class CreateEntregaTurnosAseoBitacoraTable extends Migration
 {
@@ -19,7 +20,7 @@ class CreateEntregaTurnosAseoBitacoraTable extends Migration
             $table->foreignId('id_tipo_producto')->references('id_tipo_producto')->on('entrega_turnos_tipos_productos_aseo')->onDelete('cascade');
             $table->foreignId('id_producto_aseo')->references('id_producto_aseo')->on('entrega_turnos_productos_aseo')->onDelete('cascade');
             $table->tinyInteger('utilizado');
-            $table->timestamps();
+            $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }
 

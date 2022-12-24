@@ -16,7 +16,6 @@ class CreateEntregaTurnosCategoriasSeleccionesTable extends Migration
         Schema::create('entrega_turnos_categorias_selecciones', function (Blueprint $table) {
             $table->id('id_seleccion');
             $table->string('categoria_seleccion');
-            $table->timestamps();
         });
     }
 

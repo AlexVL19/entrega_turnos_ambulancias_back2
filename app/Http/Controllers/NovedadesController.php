@@ -87,7 +87,7 @@ class NovedadesController extends Controller {
                 $fecha_carpeta = date("Y-m-d");
 
                 $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
-                '_' . $fecha_carpeta . '/' . $nombre_archivo . $extension_archivo;
+                '_' . $fecha_carpeta . '/' . $nombre_archivo;
 
                 Storage::put($ruta_imagen, $archivo);
             }
@@ -128,7 +128,7 @@ class NovedadesController extends Controller {
                 $fecha_carpeta = date("Y-m-d");
 
                 $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
-                '_' . $fecha_carpeta . '/' . $nombre_archivo . $extension_archivo;
+                '_' . $fecha_carpeta . '/' . $nombre_archivo;
 
                 Storage::put($ruta_imagen, $archivo);
             }

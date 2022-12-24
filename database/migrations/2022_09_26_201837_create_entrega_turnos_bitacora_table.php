@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class CreateEntregaTurnosBitacoraTable extends Migration
 {
@@ -18,8 +19,8 @@ class CreateEntregaTurnosBitacoraTable extends Migration
             $table->foreignId('id_turno')->references('Id_Hora')->on('htrabajadas')->onDelete('cascade');
             $table->foreignId('id_movil')->references('ID_Equipo')->on('equipos')->onDelete('cascade');
             $table->string('placa');
-            $table->foreignId('id_auxiliar')->references('Cod_Aux')->on('auxiliares')->onDelete('cascade');
-            $table->foreignId('id_conductor')->references('Cod_Con')->on('conductores')->onDelete('cascade');
+            $table->foreignId('id_auxiliar')->nullable()->references('Cod_Aux')->on('auxiliares')->onDelete('cascade');
+            $table->foreignId('id_conductor')->nullable()->references('Cod_Con')->on('conductores')->onDelete('cascade');
             $table->tinyInteger('danos_automotor');
             $table->string('foto_automotor')->nullable();
             $table->text('comentarios_conductor')->nullable();
@@ -31,7 +32,7 @@ class CreateEntregaTurnosBitacoraTable extends Migration
             $table->tinyInteger('formulario_cargas_llenado')->default(0);
             $table->tinyInteger('formulario_temperatura_llenado')->default(0);
             $table->tinyInteger('estado_novedades')->default(0);
-            $table->timestamps();
+            $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }
 

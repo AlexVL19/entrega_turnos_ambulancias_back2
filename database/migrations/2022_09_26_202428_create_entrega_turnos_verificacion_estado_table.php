@@ -18,7 +18,6 @@ class CreateEntregaTurnosVerificacionEstadoTable extends Migration
             $table->string('estado_verificacion');
             $table->foreignId('id_categoria_respuesta')->references('id_seleccion')->on('entrega_turnos_categorias_selecciones')->onDelete('cascade');
             $table->tinyInteger('estado')->default(1);
-            $table->timestamps();
         });
     }
 
