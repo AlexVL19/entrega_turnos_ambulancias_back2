@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Exports\NovedadesExport;
+use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 
@@ -82,14 +83,12 @@ class NovedadesController extends Controller {
 
                 $nombre_archivo = $archivo->getClientOriginalName();
 
-                $extension_archivo = $archivo->getClientOriginalExtension();
-
                 $fecha_carpeta = date("Y-m-d");
 
                 $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
                 '_' . $fecha_carpeta . '/' . $nombre_archivo;
 
-                Storage::put($ruta_imagen, $archivo);
+                Storage::disk('local')->put($ruta_imagen, File::get($archivo));
             }
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
@@ -123,14 +122,12 @@ class NovedadesController extends Controller {
 
                 $nombre_archivo = $archivo->getClientOriginalName();
 
-                $extension_archivo = $archivo->getClientOriginalExtension();
-
                 $fecha_carpeta = date("Y-m-d");
 
                 $ruta_imagen = 'archivos_cambio_revision/' . $request->id_novedad . 
                 '_' . $fecha_carpeta . '/' . $nombre_archivo;
 
-                Storage::put($ruta_imagen, $archivo);
+                Storage::disk('local')->put($ruta_imagen, File::get($archivo));
             }
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [

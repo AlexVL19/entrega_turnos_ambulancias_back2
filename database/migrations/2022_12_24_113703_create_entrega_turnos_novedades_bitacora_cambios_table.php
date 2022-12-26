@@ -17,8 +17,8 @@ class CreateEntregaTurnosNovedadesBitacoraCambiosTable extends Migration
         Schema::create('entrega_turnos_novedades_bitacora_cambios', function (Blueprint $table) {
             $table->id('id_cambio');
             $table->foreignId('id_novedad')->references('id_novedad')->on('entrega_turnos_novedades_bitacora')->onDelete('cascade')->onUpdate('cascade');
-            $table->tinyInteger('revision_antes');
-            $table->tinyInteger('revision_despues');
+            $table->tinyInteger('revision_antes')->comment('0 si no está revisado, 1 si está revisando y 2 si está revisado');
+            $table->tinyInteger('revision_despues')->comment('0 si no está revisado, 1 si está revisando y 2 si está revisado');
             $table->text('comentarios')->nullable();
             $table->text('imagen_adjunta')->nullable();
             $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));

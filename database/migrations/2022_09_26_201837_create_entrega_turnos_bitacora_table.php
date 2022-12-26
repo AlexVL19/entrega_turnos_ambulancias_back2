@@ -16,11 +16,15 @@ class CreateEntregaTurnosBitacoraTable extends Migration
     {
         Schema::create('entrega_turnos_bitacora', function (Blueprint $table) {
             $table->id('id_bitacora');
-            $table->foreignId('id_turno')->references('Id_Hora')->on('htrabajadas')->onDelete('cascade');
-            $table->foreignId('id_movil')->references('ID_Equipo')->on('equipos')->onDelete('cascade');
+            $table->unsignedBigInteger('id_turno')->length(20);
+            $table->foreign('id_turno')->references('Id_Hora')->on('htrabajadas')->onDelete('cascade')->onUpdate('cascade');
+            $table->unsignedInteger('id_movil')->length(10);
+            $table->foreign('id_movil')->references('ID_Equipo')->on('equipos')->onDelete('cascade')->onUpdate('cascade');
             $table->string('placa');
-            $table->foreignId('id_auxiliar')->nullable()->references('Cod_Aux')->on('auxiliares')->onDelete('cascade');
-            $table->foreignId('id_conductor')->nullable()->references('Cod_Con')->on('conductores')->onDelete('cascade');
+            $table->unsignedTinyInteger('id_auxiliar')->nullable()->length(3);
+            $table->foreign('id_auxiliar')->nullable()->references('Cod_Aux')->on('auxiliares')->onDelete('cascade')->onUpdate('cascade');
+            $table->unsignedTinyInteger('id_conductor')->nullable()->length(3);
+            $table->foreign('id_conductor')->nullable()->references('Cod_Con')->on('conductores')->onDelete('cascade')->onUpdate('cascade');
             $table->tinyInteger('danos_automotor');
             $table->string('foto_automotor')->nullable();
             $table->text('comentarios_conductor')->nullable();

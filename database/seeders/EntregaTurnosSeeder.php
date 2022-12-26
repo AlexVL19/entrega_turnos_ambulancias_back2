@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class EntregaTurnosSeed extends Seeder
+class EntregaTurnosSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -58,5 +58,12 @@ class EntregaTurnosSeed extends Seeder
         foreach ($tables as $key => $table) {
             DB::connection()->getpdo()->exec("LOAD DATA LOCAL INFILE '" . str_replace(DIRECTORY_SEPARATOR, '/', public_path($prefix . DIRECTORY_SEPARATOR . "{$key}.{$prefix}" . "'" . " INTO TABLE " . $key  . " FIELDS TERMINATED BY ',' ENCLOSED BY '" . '"' . "' LINES TERMINATED BY '\r\n' IGNORE 1 LINES")));
         }
+
+        $query_config = "INSERT INTO configs (`key`, `value`) VALUES (?, ?)";
+
+        $result_config = DB::connection()->select(DB::raw($query_config), [
+            'entrega_turnos_carga_equipos',
+            '80'
+        ]);
     }
 }

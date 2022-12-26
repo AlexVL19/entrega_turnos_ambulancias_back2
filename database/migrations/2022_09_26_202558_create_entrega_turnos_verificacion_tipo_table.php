@@ -16,7 +16,8 @@ class CreateEntregaTurnosVerificacionTipoTable extends Migration
         Schema::create('entrega_turnos_verificacion_tipo', function (Blueprint $table) {
             $table->id('id_verificacion_tipo');
             $table->string('tipo_verificacion');
-            $table->foreignId('id_categoria_verificacion')->references('id_categoria_verificacion')->on('entrega_turnos_categoria_verificacion')->onDelete('cascade');
+            $table->unsignedBigInteger('id_categoria_verificacion');
+            $table->foreign('id_categoria_verificacion', 'cat_verif_foreign')->references('id_categoria_verificacion')->on('entrega_turnos_categoria_verificacion')->onDelete('cascade')->onUpdate('cascade');
             $table->tinyInteger('estado')->default(1);
             $table->tinyInteger('tipo_movil')->nullable();
             $table->tinyInteger('tiene_carga')->default(0);

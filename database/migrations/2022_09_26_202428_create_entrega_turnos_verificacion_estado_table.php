@@ -16,7 +16,8 @@ class CreateEntregaTurnosVerificacionEstadoTable extends Migration
         Schema::create('entrega_turnos_verificacion_estado', function (Blueprint $table) {
             $table->id('id_verificacion');
             $table->string('estado_verificacion');
-            $table->foreignId('id_categoria_respuesta')->references('id_seleccion')->on('entrega_turnos_categorias_selecciones')->onDelete('cascade');
+            $table->unsignedBigInteger('id_categoria_respuesta');
+            $table->foreign('id_categoria_respuesta', 'cat_resp_foreign')->references('id_seleccion')->on('entrega_turnos_categorias_selecciones')->onDelete('cascade')->onUpdate('cascade');
             $table->tinyInteger('estado')->default(1);
         });
     }

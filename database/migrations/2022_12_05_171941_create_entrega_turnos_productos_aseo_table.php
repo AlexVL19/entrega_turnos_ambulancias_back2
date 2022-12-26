@@ -16,7 +16,7 @@ class CreateEntregaTurnosProductosAseoTable extends Migration
         Schema::create('entrega_turnos_productos_aseo', function (Blueprint $table) {
             $table->id('id_producto_aseo');
             $table->string('producto');
-            $table->foreignId('tipo_producto')->references('id_tipo_producto')->on('entrega_turnos_tipos_productos_aseo')->onDelete('cascade');
+            $table->foreignId('tipo_producto')->references('id_tipo_producto')->on('entrega_turnos_tipos_productos_aseo')->onDelete('cascade')->onUpdate('cascade');
             $table->tinyInteger('estado')->default(1);
         });
     }

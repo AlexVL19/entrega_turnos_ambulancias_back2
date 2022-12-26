@@ -419,7 +419,7 @@ class FormularioController extends Controller
     /* Consigue una config para determinar el nivel de batería que debe estar el equipo médico para que 
     sea recomendable cargarlo. */
     public function getConfigs() {
-        $query_configs = "SELECT value FROM configs WHERE id_config = 4 LIMIT 1";
+        $query_configs = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_carga_equipos' LIMIT 1";
 
         $result_configs = DB::connection()->select(DB::raw($query_configs));
 
