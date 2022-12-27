@@ -36,6 +36,7 @@ class CreateEntregaTurnosBitacoraTable extends Migration
             $table->tinyInteger('formulario_cargas_llenado')->default(0);
             $table->tinyInteger('formulario_temperatura_llenado')->default(0);
             $table->tinyInteger('estado_novedades')->default(0);
+            $table->tinyInteger('estado_auditoria')->default(0);
             $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }

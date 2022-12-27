@@ -31,10 +31,12 @@ class CreateEntregaTurnosNovedadesBitacoraTable extends Migration
             $table->foreign('id_categoria_verificacion', 'cat_verif_foreign3')->references('id_categoria_verificacion')->on('entrega_turnos_categoria_verificacion')->onDelete('cascade')->onUpdate('cascade');
             $table->text('comentarios_novedad')->nullable();
             $table->tinyInteger('estado_revision')->default(0)->comment('0 si no ha sido revisado, 1 si está en revisión y 2 si ya ha sido revisado');
+            $table->tinyInteger('estado_auditoria')->default(0)->comment('0 si no está auditado, 1 si está auditado y aprobado, 2 si está auditado pero no está aprobado');
             $table->dateTime('fecha_creacion')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('fecha_revisando')->nullable();
             $table->dateTime('fecha_revision')->nullable();
             $table->text('nota_revision')->nullable();
+            $table->text('nota_auditoria')->nullable();
         });
     }
 

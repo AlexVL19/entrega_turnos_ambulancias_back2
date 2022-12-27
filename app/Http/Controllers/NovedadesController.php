@@ -10,13 +10,26 @@ use Illuminate\Support\Facades\Storage;
 
 class NovedadesController extends Controller {
     
-    /* Consigue todas las novedades de todos los formularios que no estén revisadas */
+    /* Consigue todas las novedades de todos los formularios que no estén revisadas, 
+    y las ordena por categoría de verificación */
     public function getNovedades() {
-        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2 ORDER BY id_categoria_verificacion";
+        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2 
+        ORDER BY id_categoria_verificacion";
 
         $result_novedades = DB::connection()->select(DB::raw($query_novedades));
 
         return $result_novedades;
+    }
+
+    /* Función que consigue las novedades ordenadas por móvil y cuyo estado de auditoría no esté revisado
+    o aprobado.*/
+    public function getNovedadesAuditoria() {
+        $query_novedades_auditoria = "SELECT * FROM entrega_turnos_novedades_bitacora 
+        WHERE NOT estado_auditoria = 1 ORDER BY id_movil";
+
+        $result_novedades_auditoria = DB::connection()->select(DB::raw($query_novedades_auditoria));
+
+        return $result_novedades_auditoria;
     }
 
     /* Consigue las verificaciones con las cuales se trabajan en el formulario. Esto con el propósito de añadir legiblidad en donde
@@ -77,7 +90,7 @@ class NovedadesController extends Controller {
             (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
             (?, ?, ?, ?, ?)";
 
-            if ($request->hasFile('archivo_adjunto')) {
+            if ($request->hasFile('archivo_adjunto') || $request->imagen_adjunta !== null) {
                 
                 $archivo = $request->file('archivo_adjunto');
 
@@ -117,7 +130,7 @@ class NovedadesController extends Controller {
             (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
             (?, ?, ?, ?, ?)";
 
-            if (isset($request->archivo_adjunto)) {
+            if ($request->hasFile('archivo_adjunto') || $request->imagen_adjunta !== null) {
                 $archivo = $request->file('archivo_adjunto');
 
                 $nombre_archivo = $archivo->getClientOriginalName();
