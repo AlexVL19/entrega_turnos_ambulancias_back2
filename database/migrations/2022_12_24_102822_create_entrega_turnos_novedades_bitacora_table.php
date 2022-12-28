@@ -35,6 +35,7 @@ class CreateEntregaTurnosNovedadesBitacoraTable extends Migration
             $table->dateTime('fecha_creacion')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('fecha_revisando')->nullable();
             $table->dateTime('fecha_revision')->nullable();
+            $table->dateTime('fecha_auditoria')->nullable();
             $table->text('nota_revision')->nullable();
             $table->text('nota_auditoria')->nullable();
         });

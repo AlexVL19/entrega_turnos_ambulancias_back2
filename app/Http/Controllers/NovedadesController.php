@@ -25,7 +25,7 @@ class NovedadesController extends Controller {
     o aprobado.*/
     public function getNovedadesAuditoria() {
         $query_novedades_auditoria = "SELECT * FROM entrega_turnos_novedades_bitacora 
-        WHERE NOT estado_auditoria = 1 ORDER BY id_movil";
+        WHERE estado_auditoria = 0 ORDER BY id_movil";
 
         $result_novedades_auditoria = DB::connection()->select(DB::raw($query_novedades_auditoria));
 
@@ -84,11 +84,18 @@ class NovedadesController extends Controller {
                 $request->id_novedad
             ]);
 
+            $query_actualizar_auditoria = "UPDATE entrega_turnos_novedades_bitacora SET
+            estado_auditoria = 0 WHERE id_novedad = ?";
+
+            $result_actualizar_auditoria = DB::connection()->select(DB::raw($query_actualizar_auditoria), [
+                $request->id_novedad
+            ]);
+
             /* Luego se agrega el cambio en la bitácora de cambios, en donde se registra su estado antiguo y su estado nuevo, 
             la nota de revisión y su archivo adjunto, el cual son opcionales. */
             $query_agregar_cambio = "INSERT INTO entrega_turnos_novedades_bitacora_cambios 
-            (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
-            (?, ?, ?, ?, ?)";
+            (id_novedad, id_autor_cambio, revision_antes, revision_despues, comentarios, imagen_adjunta) 
+            VALUES (?, ?, ?, ?, ?, ?)";
 
             if ($request->hasFile('archivo_adjunto') || $request->imagen_adjunta !== null) {
                 
@@ -106,6 +113,7 @@ class NovedadesController extends Controller {
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
+                $request->autor_cambio,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
@@ -126,9 +134,16 @@ class NovedadesController extends Controller {
                 $request->id_novedad
             ]);
 
+            $query_actualizar_auditoria = "UPDATE entrega_turnos_novedades_bitacora SET
+            estado_auditoria = 0 WHERE id_novedad = ?";
+
+            $result_actualizar_auditoria = DB::connection()->select(DB::raw($query_actualizar_auditoria), [
+                $request->id_novedad
+            ]);
+
             $query_agregar_cambio = "INSERT INTO entrega_turnos_novedades_bitacora_cambios 
-            (id_novedad, revision_antes, revision_despues, comentarios, imagen_adjunta) VALUES 
-            (?, ?, ?, ?, ?)";
+            (id_novedad, id_autor_cambio, revision_antes, revision_despues, comentarios, imagen_adjunta) 
+            VALUES (?, ?, ?, ?, ?, ?)";
 
             if ($request->hasFile('archivo_adjunto') || $request->imagen_adjunta !== null) {
                 $archivo = $request->file('archivo_adjunto');
@@ -145,6 +160,7 @@ class NovedadesController extends Controller {
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
+                $request->autor_cambio,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
@@ -181,13 +197,19 @@ class NovedadesController extends Controller {
 
         /* Si existen tanto fecha inicial como final en la petición, se añade el pedazo de query a la query base.*/
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
-            $query_base_buscar_novedades .= "fecha_creacion BETWEEN " .
-            "'" . $request->fecha_inicial . "'" . " AND " . "'" . $request->fecha_final . "'";
+            $query_base_buscar_novedades .= "fecha_creacion >=" .
+            "'" . $request->fecha_inicial . "00:00:00" . "'" . " AND  fecha_creacion <= " . "'" . $request->fecha_final . "23:59:59" . "'";
         }
 
         /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
         if (isset($request->movil)) {
             $query_base_buscar_novedades .= " AND id_movil = " . $request->movil;
+        }
+
+        /* Si existe un parámetro para buscar por estado de revisión, se añade el fragmento a la query
+        base. */
+        if (isset($request->estado)) {
+            $query_base_buscar_novedades .= " AND estado_revision = " . $request->estado;
         }
 
         /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
@@ -229,5 +251,66 @@ class NovedadesController extends Controller {
 
         /* Devuelve un descargable, junto con los datos de la tabla y el nombre del archivo */
         return Excel::download($datos_tabla, 'reporte_novedades_' . $fecha_archivo . '.xlsx');
+    }
+
+    public function insertarAuditoria(Request $request) {
+        $query_insert_auditoria = "UPDATE entrega_turnos_novedades_bitacora SET 
+        estado_auditoria = ?, nota_auditoria = ?, fecha_auditoria = ? WHERE id_novedad = ?";
+
+        $result_insert_auditoria = DB::connection()->select(DB::raw($query_insert_auditoria), [
+            $request->auditoria,
+            $request->comentarios,
+            now(),
+            $request->id_novedad
+        ]);
+
+        if ($request->auditoria == 2) {
+            $query_actualizar_estado = "UPDATE entrega_turnos_novedades_bitacora SET
+            estado_revision = 3 WHERE id_novedad = ?";
+
+            $result_actualizar_estado = DB::connection()->select(DB::raw($query_actualizar_estado), [
+                $request->id_novedad
+            ]);
+        }
+
+        $query_insert_cambio = "INSERT INTO entrega_turnos_bitacora_cambios_auditoria 
+        (id_novedad, estado_auditoria_nuevo, comentarios_auditoria, id_autor_cambio) 
+        VALUES (?, ?, ?, ?)";
+
+        $result_insert_cambio = DB::connection()->select(DB::raw($query_insert_cambio), [
+            $request->id_novedad,
+            $request->auditoria,
+            $request->comentarios,
+            $request->autor_cambio
+        ]);
+
+
+    }
+
+    public function filtroAuditorias(Request $request) {
+        $query_base = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE ";
+
+        $result_query_base = null;
+
+        if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
+            $query_base .= "fecha_creacion >=" .
+            "'" . $request->fecha_inicial . "00:00:00" . "'" . " AND  fecha_creacion <= " . "'" . $request->fecha_final . "23:59:59" . "'";
+        }
+
+        /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
+        if (isset($request->movil)) {
+            $query_base .= " AND id_movil = " . $request->movil;
+        }
+
+        /* Si existe un parámetro para buscar por estado de revisión, se añade el fragmento a la query
+        base. */
+        if (isset($request->estado_novedad)) {
+            $query_base .= " AND estado_revision = " . $request->estado;
+        }
+
+        /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
+        if (isset($request->categoria)) {
+            $query_base .= " AND id_categoria_verificacion = " . $request->categoria . " ORDER BY id_categoria_verificacion";
+        }
     }
 }

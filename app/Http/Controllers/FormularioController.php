@@ -100,7 +100,7 @@ class FormularioController extends Controller
             'id_estado_verificacion' => 'integer',
             'comentarios' => 'nullable|string', //Comprueba si es una cadena de texto
             'valor' => 'nullable|integer',
-            'carga' => 'nullable|integer'
+            'carga' => 'nullable|integer|max:3'
         ]);
 
         /* Se recorre cada posición del objeto Request y se hace lo siguiente: */

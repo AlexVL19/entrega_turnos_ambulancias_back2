@@ -26,8 +26,8 @@ class CreateEntregaTurnosVerificacionBitacoraTable extends Migration
             $table->tinyInteger('hay_comentarios');
             $table->string('comentarios')->nullable();
             $table->bigInteger('valor')->nullable();
-            $table->tinyinteger('carga_inicial')->length(3)->nullable();
-            $table->tinyInteger('carga_final')->length(3)->nullable();
+            $table->tinyinteger('carga_inicial')->nullable()->length(3);
+            $table->tinyInteger('carga_final')->nullable()->length(3);
             $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }
