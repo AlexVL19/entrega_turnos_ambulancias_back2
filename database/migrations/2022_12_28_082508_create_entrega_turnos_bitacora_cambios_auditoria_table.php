@@ -19,7 +19,7 @@ class CreateEntregaTurnosBitacoraCambiosAuditoriaTable extends Migration
             $table->foreignId('id_novedad')->references('id_novedad')->on('entrega_turnos_novedades_bitacora')->onUpdate('cascade')->onDelete('cascade');
             $table->tinyInteger('estado_auditoria_nuevo')->default(0)->comment('0 si no está auditado, 1 si está auditado y aprobado, 2 si está auditado pero no está aprobado');
             $table->text('comentarios_auditoria')->nullable();
-            $table->integer('id_autor_cambio');
+            $table->integer('id_autor_cambio')->nullable();
             $table->dateTime('fecha_registro')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
     }

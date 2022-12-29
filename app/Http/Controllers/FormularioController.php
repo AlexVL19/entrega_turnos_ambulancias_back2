@@ -143,6 +143,14 @@ class FormularioController extends Controller
                     $request[0]["id_bitacora_turnos"]
                 ]);
                }
+               else if ($validar_comentarios == 0) {
+                $query_actualizar_novedades = "UPDATE entrega_turnos_bitacora SET 
+                estado_novedades = 2, estado_auditoria = 2 WHERE id_bitacora = ?";
+
+                $result_actualizar_novedades = DB::connection()->select(DB::raw($query_actualizar_novedades), [
+                    $request[0]["id_bitacora_turnos"]
+                ]);
+               }
            }
     }
 
@@ -522,15 +530,17 @@ class FormularioController extends Controller
         (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, id_categoria_verificacion, comentarios_novedad) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
-            $request->id_bitacora,
-            $request->id_turno,
-            $request->id_movil,
-            $request->id_auxiliar,
-            $request->id_conductor,
-            $request->id_verificacion_tipo,
-            $request->id_categoria_verificacion,
-            $request->comentarios_novedad
-        ]);
+        foreach ($request as $novedad) {
+            $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
+                $novedad->id_bitacora,
+                $novedad->id_turno,
+                $novedad->id_movil,
+                $novedad->id_auxiliar,
+                $novedad->id_conductor,
+                $novedad->id_verificacion_tipo,
+                $novedad->id_categoria_verificacion,
+                $novedad->comentarios_novedad
+            ]);
+        }
     }
 }

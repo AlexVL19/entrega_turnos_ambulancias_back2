@@ -14,8 +14,7 @@ class NovedadesController extends Controller {
     /* Consigue todas las novedades de todos los formularios que no estén revisadas, 
     y las ordena por categoría de verificación */
     public function getNovedades() {
-        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE NOT estado_revision = 2 
-        ORDER BY id_categoria_verificacion";
+        $query_novedades = "SELECT * FROM entrega_turnos_novedades_bitacora ORDER BY id_categoria_verificacion";
 
         $result_novedades = DB::connection()->select(DB::raw($query_novedades));
 
@@ -25,8 +24,7 @@ class NovedadesController extends Controller {
     /* Función que consigue las novedades ordenadas por móvil y cuyo estado de auditoría no esté revisado
     o aprobado.*/
     public function getNovedadesAuditoria() {
-        $query_novedades_auditoria = "SELECT * FROM entrega_turnos_novedades_bitacora 
-        WHERE estado_auditoria = 0 ORDER BY id_movil";
+        $query_novedades_auditoria = "SELECT * FROM entrega_turnos_novedades_bitacora ORDER BY id_movil";
 
         $result_novedades_auditoria = DB::connection()->select(DB::raw($query_novedades_auditoria));
 
@@ -199,7 +197,7 @@ class NovedadesController extends Controller {
         /* Si existen tanto fecha inicial como final en la petición, se añade el pedazo de query a la query base.*/
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
             $query_base_buscar_novedades .= "fecha_creacion >=" .
-            "'" . $request->fecha_inicial . "00:00:00" . "'" . " AND  fecha_creacion <= " . "'" . $request->fecha_final . "23:59:59" . "'";
+            "'" . $request->fecha_inicial . " 00:00:00" . "'" . " AND fecha_creacion <= " . "'" . $request->fecha_final . " 23:59:59" . "'";
         }
 
         /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
@@ -218,6 +216,7 @@ class NovedadesController extends Controller {
             $query_base_buscar_novedades .= " AND id_categoria_verificacion = " . $request->categoria . " ORDER BY id_categoria_verificacion";
         }
         
+        /* Se ejecuta la query cuando todos los parámetros estén validados */
         $result_buscar_novedades = DB::connection()->select(DB::raw($query_base_buscar_novedades));
 
         return $result_buscar_novedades;
@@ -254,7 +253,12 @@ class NovedadesController extends Controller {
         return Excel::download($datos_tabla, 'reporte_novedades_' . $fecha_archivo . '.xlsx');
     }
 
+    /* Función que permite actualizar la novedad para que tenga una fecha, estado y nota de auditoría. 
+    También guarda el cambio efectuado en la bitácora de cambios. */
     public function insertarAuditoria(Request $request) {
+
+        /* Actualiza el registro el cual está la novedad para que tenga una fecha, estado y nota de 
+        auditoría definidos. */
         $query_insert_auditoria = "UPDATE entrega_turnos_novedades_bitacora SET 
         estado_auditoria = ?, nota_auditoria = ?, fecha_auditoria = ? WHERE id_novedad = ?";
 
@@ -265,6 +269,8 @@ class NovedadesController extends Controller {
             $request->id_novedad
         ]);
 
+        /* Si la auditoría fue efectuada pero la revisión no fue aprobada, se cambia el estado de revisión
+        a "Auditado, rechazado", para que el que revisó la novedad pueda revisar otra vez. */
         if ($request->auditoria == 2) {
             $query_actualizar_estado = "UPDATE entrega_turnos_novedades_bitacora SET
             estado_revision = 3 WHERE id_novedad = ?";
@@ -274,6 +280,8 @@ class NovedadesController extends Controller {
             ]);
         }
 
+        /* Inserta el cambio efectuado en una bitácora de cambios, el cual lleva un recuento del cambio
+        hecho y quién hizo tal cambio. */
         $query_insert_cambio = "INSERT INTO entrega_turnos_bitacora_cambios_auditoria 
         (id_novedad, estado_auditoria_nuevo, comentarios_auditoria, id_autor_cambio) 
         VALUES (?, ?, ?, ?)";
@@ -298,7 +306,7 @@ class NovedadesController extends Controller {
         /* Si existen parámetros para determinar un rango de fechas, se añade el fragmento respectivo a la query base. */
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
             $query_base .= "fecha_creacion >=" .
-            "'" . $request->fecha_inicial . "00:00:00" . "'" . " AND  fecha_creacion <= " . "'" . $request->fecha_final . "23:59:59" . "'";
+            "'" . $request->fecha_inicial . " 00:00:00" . "'" . " AND fecha_creacion <= " . "'" . $request->fecha_final . " 23:59:59" . "'";
         }
 
         /* Si existe un parámetro para buscar por móvil, se añade el trozo de query a la query base */
@@ -328,6 +336,8 @@ class NovedadesController extends Controller {
         return $result_query_base;
     }
 
+    /* Función que permite exportar las auditorías actuales a un documento de Excel, ideal para reportes
+    y demás. */
     public function exportarAuditorias(Request $request) {
         $fecha_archivo = date('Y-m-d_H:i:s'); //Se instancia un date en formato yyyy-mm-dd hh:mm:ss
 
@@ -356,5 +366,19 @@ class NovedadesController extends Controller {
 
         /* Devuelve un descargable, junto con los datos de la tabla y el nombre del archivo */
         return Excel::download($datos_tabla, 'reporte_auditorias' . $fecha_archivo . '.xlsx');
+    }
+
+    public function validarCantidadNovedad(Request $request) {
+        $query_validacion_novedad = "SELECT id_novedad FROM entrega_turnos_novedades_bitacora WHERE 
+        id_bitacora = ? AND estado_revision = 2";
+
+        $result_validacion_novedad = DB::connection()->select(DB::raw($query_validacion_novedad), [
+            $request->id_bitacora
+        ]);
+
+        if (count($result_validacion_novedad) == 0) {
+            $query_actualizar_estado_novedad = "UPDATE entrega_turnos_bitacora SET 
+            estado_novedades = 1 WHERE id_bitacora = ?";
+        }
     }
 }

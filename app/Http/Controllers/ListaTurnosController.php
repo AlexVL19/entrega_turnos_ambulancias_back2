@@ -142,8 +142,8 @@ class ListaTurnosController extends Controller
             }
 
             elseif ($request->fecha_inicial && $request->fecha_final) {
-                $query_base .= " fecha_registro BETWEEN " . "'" . $request->fecha_inicial . "'" . " AND " 
-                . "'" . $request->fecha_final . "'";
+                $query_base .= " fecha_registro >= " .
+                "'" . $request->fecha_inicial . " 00:00:00" . "'" . " AND fecha_registro <= " . "'" . $request->fecha_final . " 23:59:59" . "'";
             }
         }
 
