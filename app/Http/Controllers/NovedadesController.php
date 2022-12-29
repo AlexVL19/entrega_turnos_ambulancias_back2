@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Exports\NovedadesExport;
+use App\Exports\AuditoriasExport;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
@@ -287,11 +288,14 @@ class NovedadesController extends Controller {
 
     }
 
+    /* Función que permite filtrar registros en el módulo de auditorías mediante un concatenado de queries. Si uno de los parámetros
+    en la petición contiene un valor, se añade el fragmento de la query respectiva. */
     public function filtroAuditorias(Request $request) {
         $query_base = "SELECT * FROM entrega_turnos_novedades_bitacora WHERE ";
 
         $result_query_base = null;
-
+        
+        /* Si existen parámetros para determinar un rango de fechas, se añade el fragmento respectivo a la query base. */
         if (isset($request->fecha_inicial) && isset($request->fecha_final)) {
             $query_base .= "fecha_creacion >=" .
             "'" . $request->fecha_inicial . "00:00:00" . "'" . " AND  fecha_creacion <= " . "'" . $request->fecha_final . "23:59:59" . "'";
@@ -305,12 +309,52 @@ class NovedadesController extends Controller {
         /* Si existe un parámetro para buscar por estado de revisión, se añade el fragmento a la query
         base. */
         if (isset($request->estado_novedad)) {
-            $query_base .= " AND estado_revision = " . $request->estado;
+            $query_base .= " AND estado_revision = " . $request->estado_novedad;
+        }
+
+        /* Si existe un parámetro para buscar por estado de auditoría, se añade el fragmento a la query base. */
+        if (isset($request->estado_auditoria)) {
+            $query_base .= " AND estado_auditoria = " . $request->estado_auditoria;
         }
 
         /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
         if (isset($request->categoria)) {
             $query_base .= " AND id_categoria_verificacion = " . $request->categoria . " ORDER BY id_categoria_verificacion";
         }
+
+        /* Finalmente se ejecuta la query */
+        $result_query_base = DB::connection()->select(DB::raw($query_base));
+
+        return $result_query_base;
+    }
+
+    public function exportarAuditorias(Request $request) {
+        $fecha_archivo = date('Y-m-d_H:i:s'); //Se instancia un date en formato yyyy-mm-dd hh:mm:ss
+
+        $array_datos = []; //Se instancia un array de datos vacío
+
+        /* Se recorre cada elemento de la petición y luego se añade al array vacío instanciado anteriormente */
+        foreach ($request->all() as $auditoria) {
+            array_push($array_datos, [
+                $auditoria["id_movil"],
+                $auditoria["id_turno"],
+                $auditoria["auxiliar"],
+                $auditoria["conductor"],
+                $auditoria["verificacion"],
+                $auditoria["categoria"],
+                $auditoria["comentario_nov"],
+                $auditoria["estado_revision"],
+                $auditoria["nota_revision"],
+                $auditoria["estado_auditoria"],
+                $auditoria["nota_auditoria"],
+                $auditoria["fecha_auditoria"]
+            ]);
+        }
+
+        /* Se llama al constructor del exportador y se pasa el array de datos */
+        $datos_tabla = new AuditoriasExport($array_datos);
+
+        /* Devuelve un descargable, junto con los datos de la tabla y el nombre del archivo */
+        return Excel::download($datos_tabla, 'reporte_auditorias' . $fecha_archivo . '.xlsx');
     }
 }

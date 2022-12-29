@@ -78,6 +78,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/getMovilesNovedad', 'getMovilesNovedad');
         Route::post('/filtrarNovedades', 'filtro');
         Route::post('/insertarAuditoria', 'insertarAuditoria');
+        Route::post('filtrarAuditorias', 'filtroAuditorias');
     });
 });
 
@@ -91,4 +92,5 @@ Route::controller(ListaTurnosController::class)->group(function() {
 
 Route::controller(NovedadesController::class)->group(function() {
     Route::post('/exportarNovedades', 'exportarDatos');
+    Route::post('/exportarAuditorias', 'exportarAuditorias');
 });
