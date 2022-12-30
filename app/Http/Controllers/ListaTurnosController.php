@@ -51,8 +51,10 @@ class ListaTurnosController extends Controller
     bitácora sea igual al que se envía y los comentarios no sean nulos, ya que de lo contrario eso
     significaría que no hay novedades en esa verificación. */
     public function getNovedades(Request $request) {
-        $query_novedades = "SELECT id_verificacion_tipo, id_estado_verificacion, comentarios
-        FROM entrega_turnos_verificacion_bitacora WHERE id_bitacora = ? AND comentarios IS NOT NULL";
+
+        $query_novedades = "SELECT id_verificacion_tipo, comentarios_novedad AS comentarios, 
+        estado_revision, estado_auditoria, nota_revision, nota_auditoria, 
+        fecha_revision, fecha_auditoria FROM entrega_turnos_novedades_bitacora WHERE id_bitacora = ?";
 
         $result_novedades = DB::connection()->select(DB::raw($query_novedades), [
             $request->id_bitacora

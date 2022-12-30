@@ -530,16 +530,16 @@ class FormularioController extends Controller
         (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, id_categoria_verificacion, comentarios_novedad) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        foreach ($request as $novedad) {
+        foreach ($request->all() as $novedad) {
             $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
-                $novedad->id_bitacora,
-                $novedad->id_turno,
-                $novedad->id_movil,
-                $novedad->id_auxiliar,
-                $novedad->id_conductor,
-                $novedad->id_verificacion_tipo,
-                $novedad->id_categoria_verificacion,
-                $novedad->comentarios_novedad
+                $novedad["id_bitacora"],
+                $novedad["id_turno"],
+                $novedad["id_movil"],
+                $novedad["id_auxiliar"],
+                $novedad["id_conductor"],
+                $novedad["id_verificacion_tipo"],
+                $novedad["id_categoria_verificacion"],
+                $novedad["comentarios_novedad"]
             ]);
         }
     }
