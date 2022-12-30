@@ -370,7 +370,7 @@ class NovedadesController extends Controller {
 
     public function validarCantidadNovedad(Request $request) {
         $query_validacion_novedad = "SELECT id_novedad FROM entrega_turnos_novedades_bitacora WHERE 
-        id_bitacora = ? AND estado_revision = 2";
+        id_bitacora = ? AND NOT estado_revision = 2";
 
         $result_validacion_novedad = DB::connection()->select(DB::raw($query_validacion_novedad), [
             $request->id_bitacora
@@ -379,6 +379,26 @@ class NovedadesController extends Controller {
         if (count($result_validacion_novedad) == 0) {
             $query_actualizar_estado_novedad = "UPDATE entrega_turnos_bitacora SET 
             estado_novedades = 1 WHERE id_bitacora = ?";
+
+            $result_actualizar_estado_novedad = DB::connection()->select(DB::raw($query_actualizar_estado_novedad), [
+                $request->id_bitacora
+            ]);
+        }
+    }
+
+    public function validarCantidadAuditoria(Request $request) {
+        $query_validacion_auditoria = "SELECT id_novedad FROM entrega_trunos_novedades_bitacora WHERE id_bitacora = ? AND NOT estado_auditoria = 1";
+
+        $result_validacion_auditoria = DB::connection()->select(DB::raw($query_validacion_auditoria), [
+            $request->id_bitacora
+        ]);
+
+        if (count($result_validacion_auditoria) == 0) {
+            $query_actualizar_estado_auditoria = "UPDATE entrega_turnos_bitacora SET estado_auditoria = 1 WHERE id_bitacora = ?";
+
+            $result_actualizar_estado_auditoria = DB::connection()->select(DB::raw($query_actualizar_estado_auditoria), [
+                $request->id_bitacora
+            ]);
         }
     }
 }

@@ -79,6 +79,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/filtrarNovedades', 'filtro');
         Route::post('/insertarAuditoria', 'insertarAuditoria');
         Route::post('filtrarAuditorias', 'filtroAuditorias');
+        Route::post('/comprobarNovedades', 'validarCantidadNovedad');
+        Route::post('/comprobarAuditorias', 'validarCantidadAuditoria');
     });
 });
 
