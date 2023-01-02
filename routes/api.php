@@ -66,6 +66,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/consultarAseo', 'consultarAseo');
         Route::post('/consultarTemperaturas', 'consultarTemperaturas');
         Route::post('/filtrarRegistros', 'filtroRegistros');
+        Route::post('/verReporte', 'verReporte');
     });
 
     Route::controller(NovedadesController::class)->group(function () {
@@ -81,6 +82,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('filtrarAuditorias', 'filtroAuditorias');
         Route::post('/comprobarNovedades', 'validarCantidadNovedad');
         Route::post('/comprobarAuditorias', 'validarCantidadAuditoria');
+        Route::post('/exportarPdfNovedades', 'exportarNovedadPdf');
     });
 });
 

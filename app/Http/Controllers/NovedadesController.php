@@ -8,6 +8,7 @@ use App\Exports\AuditoriasExport;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class NovedadesController extends Controller {
     
@@ -417,5 +418,58 @@ class NovedadesController extends Controller {
                 $request->id_turno
             ]);
         }
+    }
+
+    public function exportarNovedadPdf(Request $request) {
+        $config_codigo = "";
+        $config_version = "";
+        $config_estandar = "";
+        $config_pagina = "";
+
+
+        $query_configs_formato = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formato%'";
+
+        $result_configs_formato = DB::connection()->select(DB::raw($query_configs_formato));
+
+        foreach ($result_configs_formato as $config) {
+            if (str_contains($config->value, 'GINF')) {
+                $config_codigo = $config->value;
+            }
+
+            if (str_contains($config->value, '20')) {
+                $config_version = $config->value;
+            }
+
+            if (str_contains($config->value, 'Procesos')) {
+                $config_estandar = $config->value;
+            }
+
+            if (str_contains($config->value, 'Página')) {
+                $config_pagina = $config->value;
+            }
+        }
+
+        $configs_json = json_encode([
+            "codigo" => $config_codigo,
+            "version" => $config_version,
+            "estandar" => $config_estandar,
+            "pagina" => $config_pagina
+        ]);
+
+        $query_placa = "SELECT placa FROM equipos WHERE ID_Equipo = ?";
+
+        $result_placa = DB::connection()->select(DB::raw($query_placa), [
+            $request->id_movil
+        ]);
+
+        $placa = $result_placa[0]->placa;
+
+        $fecha_formato = date('Y-m-d');
+
+        $descripcion_solucion = $request->nota_revision;
+
+        $pdf = Pdf::loadView('formato_exportacion');
+
+        return $pdf->download('prueba.pdf');
     }
 }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Exports\TurnosExport;
+use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 
 class ListaTurnosController extends Controller
 {
@@ -226,5 +228,25 @@ class ListaTurnosController extends Controller
         /* Luego se devuelve el documento de Excel listo para descargar, en conjunto con el nombre y la
         fecha del archivo. */
         return Excel::download($datos_tabla, 'reporte_turnos_entregados_' . $fecha_archivo . '.xlsx');
+    }
+
+    public function verReporte(Request $request) {
+        if ($request->danos_automotor !== 0) {
+            $query_foto = "SELECT foto_automotor FROM entrega_turnos_bitacora WHERE id_bitacora = ?";
+
+            $result_foto = DB::connection()->select(DB::raw($query_foto), [
+                $request->id_bitacora
+            ]);
+
+            $ruta_foto = $result_foto[0]->foto_automotor;
+
+            $archivo = Storage::get($ruta_foto);
+
+            return base64_encode($archivo);
+        }
+
+        else {
+            return response(json_encode(array('mensaje' => 'No encontrado')));
+        }
     }
 }
