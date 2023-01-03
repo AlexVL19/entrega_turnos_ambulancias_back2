@@ -60,7 +60,7 @@
         </div>
 
         <div style="justify-content: start; margin-bottom: 20px">
-            <b>PLACA DEL VEHICULO: </b> {{ $placa }}
+            <b>PLACA DEL VEHICULO: </b> {{ json_decode($placa, true)[0]['placa'] }}
         </div>
 
         <div style="justify-content: start; margin-bottom: 30px">

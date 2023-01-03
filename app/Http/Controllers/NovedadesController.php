@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class NovedadesController extends Controller {
     
@@ -458,7 +459,6 @@ class NovedadesController extends Controller {
             "estandar" => $config_estandar,
             "pagina" => $config_pagina
         ]);
-
         $query_placa = "SELECT placa FROM equipos WHERE ID_Equipo = ?";
 
         $result_placa = DB::connection()->select(DB::raw($query_placa), [
