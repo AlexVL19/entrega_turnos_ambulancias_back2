@@ -24,27 +24,37 @@ class VistaController extends Controller {
             conductor está y que todavía estén activos. */
             $query_aperturas_auxiliar = "SELECT Id_Hora as IdTurno, Fecha as fecha_apertura, 
             comentarios_operador, ID_Equipo as REQVEH, Turno FROM 
-            htrabajadas WHERE Activo = 2 AND ID_Auxiliar = ?";
+            htrabajadas WHERE Activo = 2 AND ID_Auxiliar = ? AND ID_Equipo IS NOT NULL AND Turno IS NOT NULL";
 
             $result_aperturas_auxiliar = DB::connection()->select(DB::raw($query_aperturas_auxiliar), [$request->id_cargo]);
 
             /* Itera sobre cada apertura que exista */
             for ($index = 0; $index < count($result_aperturas_auxiliar); $index++) { 
 
-                /* Consigue varios datos del vehículo como el nombre y su placa */
-                $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
+                if (isset($result_aperturas_auxiliar[$index]->REQVEH)) {
+                    /* Consigue varios datos del vehículo como el nombre y su placa */
+                    $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
 
-                $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
-                [$result_aperturas_auxiliar[$index]->REQVEH]);
+                    $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
+                    [$result_aperturas_auxiliar[$index]->REQVEH]);
 
-                /* Por cada coincidencia va insertando en este array */
-                array_push($lista_datos_vehiculo, $result_datos_vehiculo);
+                    /* Por cada coincidencia va insertando en este array */
+                    array_push($lista_datos_vehiculo, $result_datos_vehiculo);
+                }
 
                 /* Consigue el nombre del turno cuyo ID coincida con el que se da como parámetro */
                 $query_datos_turno = "SELECT Turno, tiene_aseo, jornada_temperatura FROM turnos WHERE id_Turno = ?";
 
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_auxiliar[$index]->Turno]);
+
+                if (isset($result_datos_turno[$index]->jornada_temperatura)) {
+                    $result_datos_turno[$index]->jornada_temperatura = '1';
+                }
+
+                if (isset($result_datos_turno[$index]->Turno)) {
+                    $result_datos_turno[$index]->Turno = 'N/A';
+                }
 
                 /* Por cada coincidencia va agregando a este array */
                 array_push($lista_datos_turno, $result_datos_turno);
@@ -110,7 +120,7 @@ class VistaController extends Controller {
             /* Agrupa todas esas respuestas en un JSON */
             return response(json_encode([
                 "datos_turno" => $result_aperturas_auxiliar,
-                "datos_vehiculo" => $lista_datos_vehiculo,
+                "datos_vehiculo" => isset($lista_datos_vehiculo)? $lista_datos_vehiculo : null,
                 "tipo_turno" => $lista_datos_turno,
                 "formulario_llenado" => $formulario_llenado,
                 "banderas_llenados" => $banderas_formularios,
@@ -130,27 +140,33 @@ class VistaController extends Controller {
             está participando y que estén activos */
             $query_aperturas_conductor = "SELECT Id_Hora as IdTurno, Fecha as fecha_apertura, 
             ID_Equipo as REQVEH, Turno FROM 
-            htrabajadas WHERE Activo = 1 AND ID_Conductor = ?";
+            htrabajadas WHERE Activo = 2 AND ID_Conductor = ? AND ID_Equipo IS NOT NULL AND Turno IS NOT NULL";
 
             $result_aperturas_conductor = DB::connection()->select(DB::raw($query_aperturas_conductor), [$request->id_cargo]);
 
             /* Por cada apertura que exista */
             for ($index = 0; $index < count($result_aperturas_conductor); $index++) { 
 
-                /* Obtiene la información del vehículo que pertenezca a ese turno */
-                $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
+                if (isset($result_aperturas_conductor[$index]->REQVEH)) {
+                    /* Consigue varios datos del vehículo como el nombre y su placa */
+                    $query_datos_vehiculo = "SELECT VEHNOM, placa FROM equipos WHERE VEHCOD = ?";
 
-                $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
-                [$result_aperturas_conductor[$index]->REQVEH]);
+                    $result_datos_vehiculo = DB::connection()->select(DB::raw($query_datos_vehiculo),
+                    [$result_aperturas_conductor[$index]->REQVEH]);
 
-                /* Cada coincidencia se guarda dentro del array */
-                array_push($lista_datos_vehiculo, $result_datos_vehiculo);
+                    /* Por cada coincidencia va insertando en este array */
+                    array_push($lista_datos_vehiculo, $result_datos_vehiculo);
+                }
 
                 /* Obtiene el nombre del turno en función del ID otorgado */
-                $query_datos_turno = "SELECT Turno, tiene_aseo FROM turnos WHERE id_Turno = ?";
+                $query_datos_turno = "SELECT Turno, tiene_aseo, jornada_temperatura FROM turnos WHERE id_Turno = ?";
 
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_conductor[$index]->Turno]);
+
+                if ($result_datos_turno[$index]->jornada_temperatura == null) {
+                    $result_datos_turno[$index]->jornada_temperatura = '1';
+                }
 
                 /* Cada coincidencia se guarda dentro del array */
                 array_push($lista_datos_turno, $result_datos_turno);
@@ -215,7 +231,7 @@ class VistaController extends Controller {
             /* Agrupa todas esas respuestas en un JSON */
             return response(json_encode([
                 "datos_turno" => $result_aperturas_conductor,
-                "datos_vehiculo" => $lista_datos_vehiculo,
+                "datos_vehiculo" => isset($lista_datos_vehiculo) ? $lista_datos_vehiculo : null,
                 "tipo_turno" => $lista_datos_turno,
                 "formulario_llenado" => $formulario_llenado,
                 "banderas_llenados" => $banderas_formularios,

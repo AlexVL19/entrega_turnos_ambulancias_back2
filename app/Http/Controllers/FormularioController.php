@@ -136,8 +136,8 @@ class FormularioController extends Controller
                }
 
                if ($validar_comentarios == 1) {
-                $query_actualizar_novedades = "UPDATE entrega_turnos_bitacora SET novedades_formulario = 1 
-                WHERE id_bitacora = ?";
+                $query_actualizar_novedades = "UPDATE entrega_turnos_bitacora SET novedades_formulario = 1, 
+                estado_novedades = 0, estado_auditoria = 0 WHERE id_bitacora = ?";
 
                 $result_actualizar_novedades = DB::connection()->select(DB::raw($query_actualizar_novedades), [
                     $request[0]["id_bitacora_turnos"]
@@ -156,72 +156,117 @@ class FormularioController extends Controller
 
     public function getAmbulanceData ($id_movil) {
 
-        /* Consigue la fecha de vencimiento del último soat registrado de la móvil */
-        $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_equipo = ? 
-        ORDER BY id_soat DESC LIMIT 1";
+        if (isset($id_movil)) {
+            /* Consigue la fecha de vencimiento del último soat registrado de la móvil */
+            $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_equipo = ? 
+            ORDER BY id_soat DESC LIMIT 1";
 
-        $result_soat = DB::connection()->select(DB::raw($query_soat), [
-            $id_movil
-        ]);
+            $result_soat = DB::connection()->select(DB::raw($query_soat), [
+                $id_movil
+            ]);
 
-        /* Consigue la última fecha de vencimiento del extintor de la móvil*/
-        $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
-        ORDER BY id_extintor DESC LIMIT 1";
+            if (count($result_soat) == 0) {
+                array_push($result_soat, [
+                    "fecha_vencimiento" => '--'
+                ]);
+            }
 
-        $result_extintores = DB::connection()->select(DB::raw($query_extintores), [
-            $id_movil
-        ]);
+            /* Consigue la última fecha de vencimiento del extintor de la móvil*/
+            $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
+            ORDER BY id_extintor DESC LIMIT 1";
 
-        /* Consigue la última revisión tecnicomecánica en este móvil */
-        $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_equipo = ? 
-        ORDER BY id_tecnomecanica DESC LIMIT 1";
+            $result_extintores = DB::connection()->select(DB::raw($query_extintores), [
+                $id_movil
+            ]);
 
-        $result_tecnomecanica = DB::connection()->select(DB::raw($query_tecnomecanica), [
-            $id_movil
-        ]);
+            if (count($result_extintores) == 0) {
+               array_push($result_extintores, [
+                "fecha_vencimiento" => '--'
+               ]);
+            }
 
-        /* Consigue el último cambio de hidráulica de la móvil */
-        $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
-        WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
-        $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
-            $id_movil
-        ]);
+            /* Consigue la última revisión tecnicomecánica en este móvil */
+            $query_tecnomecanica = "SELECT fecha_revision FROM movil_tecnomecanica WHERE id_equipo = ? 
+            ORDER BY id_tecnomecanica DESC LIMIT 1";
 
-        /* Consigue el último cambio de aceite realizado en la móvil */
-        $query_cambios_aceite = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_motor 
-        WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
+            $result_tecnomecanica = DB::connection()->select(DB::raw($query_tecnomecanica), [
+                $id_movil
+            ]);
 
-        $result_cambios_aceite = DB::connection()->select(DB::raw($query_cambios_aceite), [
-            $id_movil
-        ]);
+            if (count($result_tecnomecanica) == 0) {
+                array_push($result_tecnomecanica, [
+                    "fecha_revision" => '--'
+                ]);
+            }
 
-        /* Consigue el último cambio de frenos de la móvil */
-        $query_cambios_frenos = "SELECT fecha_ultimo_cambio FROM movil_cambios_frenos
-        WHERE id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
+            /* Consigue el último cambio de hidráulica de la móvil */
+            $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
+            WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
-        $result_cambios_frenos = DB::connection()->select(DB::raw($query_cambios_frenos), [
-            $id_movil
-        ]);
+            $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
+                $id_movil
+            ]);
 
-        /* Consigue el último cambio de suspensión de la móvil */
-        $query_cambios_suspension = "SELECT fecha_ultimo_cambio FROM movil_cambios_suspension
-        WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1"; 
+            if (count($result_cambios_hidraulica) == 0) {
+                array_push($result_cambios_hidraulica, [
+                    "fecha_ultimo_cambio" => '--'
+                ]);
+            }
 
-        $result_cambios_suspension = DB::connection()->select(DB::raw($query_cambios_suspension), [
-            $id_movil
-        ]);
+            /* Consigue el último cambio de aceite realizado en la móvil */
+            $query_cambios_aceite = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_motor 
+            WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
 
-        /* Devuelve todas las respuestas agrupadas en un JSON*/
-            return response(json_encode([
-                "fecha_soat" => $result_soat,
-                "fecha_extintor" => $result_extintores,
-                "revision_tecno" => $result_tecnomecanica,
-                "cambios_hidraulica" => $result_cambios_hidraulica,
-                "cambios_aceite" => $result_cambios_aceite,
-                "cambios_frenos" => $result_cambios_frenos,
-                "cambios_suspension" => $result_cambios_suspension
-            ]));
+            $result_cambios_aceite = DB::connection()->select(DB::raw($query_cambios_aceite), [
+                $id_movil
+            ]);
+
+            if (count($result_cambios_aceite) == 0) {
+                array_push($result_cambios_aceite, [
+                    "fecha_ultimo_cambio" => '--'
+                ]);
+            }
+
+            /* Consigue el último cambio de frenos de la móvil */
+            $query_cambios_frenos = "SELECT fecha_ultimo_cambio FROM movil_cambios_frenos
+            WHERE id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
+
+            $result_cambios_frenos = DB::connection()->select(DB::raw($query_cambios_frenos), [
+                $id_movil
+            ]);
+
+            if (count($result_cambios_frenos) == 0) {
+                array_push($result_cambios_frenos, [
+                    "fecha_ultimo_cambio" => '--'
+                ]);
+            }
+
+            /* Consigue el último cambio de suspensión de la móvil */
+            $query_cambios_suspension = "SELECT fecha_ultimo_cambio FROM movil_cambios_suspension
+            WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1"; 
+
+            $result_cambios_suspension = DB::connection()->select(DB::raw($query_cambios_suspension), [
+                $id_movil
+            ]);
+
+            if (count($result_cambios_suspension) == 0) {
+                array_push($result_cambios_suspension, [
+                    "fecha_ultimo_cambio" => '--'
+                ]);
+            }
+
+            /* Devuelve todas las respuestas agrupadas en un JSON*/
+                return response(json_encode([
+                    "fecha_soat" => $result_soat,
+                    "fecha_extintor" => $result_extintores,
+                    "revision_tecno" => $result_tecnomecanica,
+                    "cambios_hidraulica" => $result_cambios_hidraulica,
+                    "cambios_aceite" => $result_cambios_aceite,
+                    "cambios_frenos" => $result_cambios_frenos,
+                    "cambios_suspension" => $result_cambios_suspension
+                ]));
+            }
     }
 
     public function insertIntoMainBitacora (Request $request) {

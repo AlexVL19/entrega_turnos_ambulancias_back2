@@ -232,7 +232,7 @@ class ListaTurnosController extends Controller
 
     public function verReporte(Request $request) {
         if ($request->danos_automotor !== 0) {
-            $query_foto = "SELECT foto_automotor FROM entrega_turnos_bitacora WHERE id_bitacora = ?";
+            $query_foto = "SELECT foto_automotor FROM entrega_turnos_bitacora WHERE id_bitacora = ? AND foto_automotor IS NOT NULL AND NOT danos_automotor = 0";
 
             $result_foto = DB::connection()->select(DB::raw($query_foto), [
                 $request->id_bitacora
@@ -240,9 +240,15 @@ class ListaTurnosController extends Controller
 
             $ruta_foto = $result_foto[0]->foto_automotor;
 
-            $archivo = Storage::get($ruta_foto);
+            if (Storage::disk('local')->exists($ruta_foto)) {
+                $archivo = Storage::get($ruta_foto);
 
-            return base64_encode($archivo);
+                return base64_encode($archivo);
+            }
+
+            else {
+                return 'No encontrado';
+            }
         }
 
         else {

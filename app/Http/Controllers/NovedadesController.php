@@ -426,6 +426,9 @@ class NovedadesController extends Controller {
         $config_estandar = "";
         $config_pagina = "";
 
+        $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
+
+        $archivo_base64 = base64_encode($archivo_antes);
 
         $query_configs_formato = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formato%'";
 
@@ -444,7 +447,7 @@ class NovedadesController extends Controller {
                 $config_estandar = $config->value;
             }
 
-            if (str_contains($config->value, 'Página')) {
+            if (str_contains($config->value, 'Pagina')) {
                 $config_pagina = $config->value;
             }
         }
@@ -462,13 +465,81 @@ class NovedadesController extends Controller {
             $request->id_movil
         ]);
 
-        $placa = $result_placa[0]->placa;
+        $placa = json_encode($result_placa);
 
         $fecha_formato = date('Y-m-d');
 
         $descripcion_solucion = $request->nota_revision;
 
-        $pdf = Pdf::loadView('formato_exportacion');
+        $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('formato_exportacion', [
+            'configs_json' => $configs_json,
+            'placa' => $placa,
+            'fecha_formato' => $fecha_formato,
+            'descripcion_solucion' => $descripcion_solucion,
+            'archivo_base64' => $archivo_base64
+        ]);
+
+        return $pdf->download('prueba.pdf');
+    }
+
+    public function exportarNovedadPdfAuditor(Request $request) {
+        $config_codigo = "";
+        $config_version = "";
+        $config_estandar = "";
+        $config_pagina = "";
+
+        $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
+
+        $archivo_base64 = base64_encode($archivo_antes);
+
+        $query_configs_formato = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formato%'";
+
+        $result_configs_formato = DB::connection()->select(DB::raw($query_configs_formato));
+
+        foreach ($result_configs_formato as $config) {
+            if (str_contains($config->value, 'GINF')) {
+                $config_codigo = $config->value;
+            }
+
+            if (str_contains($config->value, '20')) {
+                $config_version = $config->value;
+            }
+
+            if (str_contains($config->value, 'Procesos')) {
+                $config_estandar = $config->value;
+            }
+
+            if (str_contains($config->value, 'Pagina')) {
+                $config_pagina = $config->value;
+            }
+        }
+
+        $configs_json = json_encode([
+            "codigo" => $config_codigo,
+            "version" => $config_version,
+            "estandar" => $config_estandar,
+            "pagina" => $config_pagina
+        ]);
+
+        $query_placa = "SELECT placa FROM equipos WHERE ID_Equipo = ?";
+
+        $result_placa = DB::connection()->select(DB::raw($query_placa), [
+            $request->id_movil
+        ]);
+
+        $placa = json_encode($result_placa);
+
+        $fecha_formato = date('Y-m-d');
+
+        $descripcion_solucion = $request->nota_auditoria;
+
+        $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('formato_exportacion_auditorias', [
+            'configs_json' => $configs_json,
+            'placa' => $placa,
+            'fecha_formato' => $fecha_formato,
+            'descripcion_solucion' => $descripcion_solucion,
+            'archivo_base64' => $archivo_base64
+        ]);
 
         return $pdf->download('prueba.pdf');
     }

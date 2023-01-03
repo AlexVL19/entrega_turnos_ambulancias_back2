@@ -30,7 +30,7 @@
                 <img src="data:image/png;base64,{{ $archivo_base64 }}" style="height: 100px; width: 100px; padding: 30px;">
             </td>
             <td class="tg-0lax" colspan="2" style="text-align: center">
-                FORMATO DE SOLUCION DE NOVEDAD
+                FORMATO DE SOLUCION DE AUDITORÍA
             </td>
             <td class="tg-0lax" style="text-align: center">
                 <div>CÓDIGO</div>
@@ -68,7 +68,7 @@
         </div>
 
         <div style="justify-content: center; text-align: center;">
-            <b>DESCRIPCION DE LA SOLUCION
+            <b>DESCRIPCION DE LA AUDITORIA
                 <div style="margin-top: 10px; text-align: justify; border: 1px black solid; height: 200px; padding: 10px">
                     {{ $descripcion_solucion }}
                 </div>

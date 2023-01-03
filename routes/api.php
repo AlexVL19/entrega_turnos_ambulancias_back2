@@ -82,7 +82,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('filtrarAuditorias', 'filtroAuditorias');
         Route::post('/comprobarNovedades', 'validarCantidadNovedad');
         Route::post('/comprobarAuditorias', 'validarCantidadAuditoria');
-        Route::post('/exportarPdfNovedades', 'exportarNovedadPdf');
     });
 });
 
@@ -97,4 +96,6 @@ Route::controller(ListaTurnosController::class)->group(function() {
 Route::controller(NovedadesController::class)->group(function() {
     Route::post('/exportarNovedades', 'exportarDatos');
     Route::post('/exportarAuditorias', 'exportarAuditorias');
+    Route::post('/exportarPdfNovedades', 'exportarNovedadPdf');
+    Route::post('/exportarPdfAuditorias', 'exportarNovedadPdfAuditor');
 });
