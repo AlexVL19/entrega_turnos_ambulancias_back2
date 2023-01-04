@@ -91,6 +91,7 @@ Route::controller(LoginController::class)->group(function () {
 
 Route::controller(ListaTurnosController::class)->group(function() {
     Route::post('/exportarDatos', 'exportarDatos');
+    Route::post('/verPdfFormulario', 'verFormularioPDF');
 });
 
 Route::controller(NovedadesController::class)->group(function() {

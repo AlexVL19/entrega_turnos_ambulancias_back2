@@ -8,6 +8,7 @@ use App\Exports\TurnosExport;
 use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ListaTurnosController extends Controller
 {
@@ -254,5 +255,55 @@ class ListaTurnosController extends Controller
         else {
             return response(json_encode(array('mensaje' => 'No encontrado')));
         }
+    }
+
+    public function verFormularioPDF (Request $request) {
+        $config_codigo = "";
+        $config_version = "";
+        $config_estandar = "";
+        $formulario_vistas = [];
+
+        $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
+
+        $archivo_base64 = base64_encode($archivo_antes);
+
+        $query_configs_formato = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formato%'";
+
+        $result_configs_formato = DB::connection()->select(DB::raw($query_configs_formato));
+
+        foreach ($result_configs_formato as $config) {
+            if (str_contains($config->value, 'GINF')) {
+                $config_codigo = $config->value;
+            }
+
+            if (str_contains($config->value, '20')) {
+                $config_version = $config->value;
+            }
+
+            if (str_contains($config->value, 'Procesos')) {
+                $config_estandar = $config->value;
+            }
+        }
+
+        $configs_json = json_encode([
+            "codigo" => $config_codigo,
+            "version" => $config_version,
+            "estandar" => $config_estandar,
+        ]);
+
+        foreach ($request->all() as $categoria) {
+            array_push($formulario_vistas, $categoria['formularios']);
+        }
+
+        $fecha_formato = date('Y-m-d');
+
+        $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('formato_formulario', [
+            'configs_json' => $configs_json,
+            'formulario_vistas' => json_encode($formulario_vistas),
+            'archivo_base64' => $archivo_base64,
+            'fecha_formato' => $fecha_formato
+        ]);
+
+        return $pdf->download('prueba.pdf');
     }
 }

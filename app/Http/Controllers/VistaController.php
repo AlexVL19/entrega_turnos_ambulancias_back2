@@ -48,12 +48,12 @@ class VistaController extends Controller {
                 $result_datos_turno = DB::connection()->select(DB::raw($query_datos_turno),
                 [$result_aperturas_auxiliar[$index]->Turno]);
 
-                if (isset($result_datos_turno[$index]->jornada_temperatura)) {
-                    $result_datos_turno[$index]->jornada_temperatura = '1';
+                if ($result_datos_turno[0]->jornada_temperatura == null) {
+                    $result_datos_turno[0]->jornada_temperatura = '1';
                 }
 
-                if (isset($result_datos_turno[$index]->Turno)) {
-                    $result_datos_turno[$index]->Turno = 'N/A';
+                if ($result_datos_turno[0]->Turno == null) {
+                    $result_datos_turno[0]->Turno = 'N/A';
                 }
 
                 /* Por cada coincidencia va agregando a este array */

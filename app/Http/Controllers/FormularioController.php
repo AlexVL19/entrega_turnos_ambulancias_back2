@@ -201,7 +201,7 @@ class FormularioController extends Controller
             }
 
             /* Consigue el último cambio de hidráulica de la móvil */
-            $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
+            $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
             WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
             $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
@@ -210,12 +210,13 @@ class FormularioController extends Controller
 
             if (count($result_cambios_hidraulica) == 0) {
                 array_push($result_cambios_hidraulica, [
-                    "fecha_ultimo_cambio" => '--'
+                    "fecha_ultimo_cambio" => '--',
+                    "kilometraje_ultimo_cambio" => '--'
                 ]);
             }
 
             /* Consigue el último cambio de aceite realizado en la móvil */
-            $query_cambios_aceite = "SELECT fecha_ultimo_cambio FROM movil_cambios_aceite_motor 
+            $query_cambios_aceite = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_aceite_motor 
             WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
 
             $result_cambios_aceite = DB::connection()->select(DB::raw($query_cambios_aceite), [
@@ -224,12 +225,13 @@ class FormularioController extends Controller
 
             if (count($result_cambios_aceite) == 0) {
                 array_push($result_cambios_aceite, [
-                    "fecha_ultimo_cambio" => '--'
+                    "fecha_ultimo_cambio" => '--',
+                    "kilometraje_ultimo_cambio" => '--'
                 ]);
             }
 
             /* Consigue el último cambio de frenos de la móvil */
-            $query_cambios_frenos = "SELECT fecha_ultimo_cambio FROM movil_cambios_frenos
+            $query_cambios_frenos = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_frenos
             WHERE id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
 
             $result_cambios_frenos = DB::connection()->select(DB::raw($query_cambios_frenos), [
@@ -238,12 +240,13 @@ class FormularioController extends Controller
 
             if (count($result_cambios_frenos) == 0) {
                 array_push($result_cambios_frenos, [
-                    "fecha_ultimo_cambio" => '--'
+                    "fecha_ultimo_cambio" => '--',
+                    "kilometraje_ultimo_cambio" => '--'
                 ]);
             }
 
             /* Consigue el último cambio de suspensión de la móvil */
-            $query_cambios_suspension = "SELECT fecha_ultimo_cambio FROM movil_cambios_suspension
+            $query_cambios_suspension = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_suspension
             WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1"; 
 
             $result_cambios_suspension = DB::connection()->select(DB::raw($query_cambios_suspension), [
@@ -252,7 +255,8 @@ class FormularioController extends Controller
 
             if (count($result_cambios_suspension) == 0) {
                 array_push($result_cambios_suspension, [
-                    "fecha_ultimo_cambio" => '--'
+                    "fecha_ultimo_cambio" => '--',
+                    "kilometraje_ultimo_cambio" => '--'
                 ]);
             }
 
@@ -576,16 +580,27 @@ class FormularioController extends Controller
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         foreach ($request->all() as $novedad) {
-            $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
-                $novedad["id_bitacora"],
-                $novedad["id_turno"],
+
+            $query_verificar_novedades = "SELECT id_novedad FROM entrega_turnos_novedades_bitacora WHERE 
+            id_movil = ? AND id_verificacion_tipo = ? AND NOT estado_auditoria = 1";
+
+            $result_verificar_novedades = DB::connection()->select(DB::raw($query_verificar_novedades), [
                 $novedad["id_movil"],
-                $novedad["id_auxiliar"],
-                $novedad["id_conductor"],
-                $novedad["id_verificacion_tipo"],
-                $novedad["id_categoria_verificacion"],
-                $novedad["comentarios_novedad"]
+                $novedad["id_verificacion_tipo"]
             ]);
+
+            if (count($result_verificar_novedades) == 0) {
+                $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
+                    $novedad["id_bitacora"],
+                    $novedad["id_turno"],
+                    $novedad["id_movil"],
+                    $novedad["id_auxiliar"],
+                    $novedad["id_conductor"],
+                    $novedad["id_verificacion_tipo"],
+                    $novedad["id_categoria_verificacion"],
+                    $novedad["comentarios_novedad"]
+                ]);
+            }
         }
     }
 }
