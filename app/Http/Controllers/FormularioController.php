@@ -557,7 +557,7 @@ class FormularioController extends Controller
             $request->temp_max,
             $request->temp_min,
             $request->humedad_max,
-            $request->jornada
+            isset($request->jornada)? $request->jornada : '1'
         ]);
 
         /* Actualiza la bandera indicando que el formulario ya se llenó */
