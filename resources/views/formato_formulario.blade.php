@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Formato de solución de novedad</title>
+    <title>Formato de formulario llenado</title>
     <style type="text/css">
         .tg  {border-collapse:collapse;border-spacing:0;}
         .tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
@@ -40,9 +41,31 @@
         </thead>
     </table>
 
-    <div>
-        @for ($index = 0; $index < count(json_decode($formulario_vistas, true)); $index++)
-            {{ json_encode(json_decode($formulario_vistas)[$index]) }}
-        @endfor
+    <div style="margin-top: 40px">
+        <table class="tg">
+            <thead>
+                <tr>
+                <th class="tg-0lax" style="background-color: lightblue">Tipo de verificación</th>
+                <th class="tg-0lax" style="background-color: lightblue">Respuesta</th>
+                <th class="tg-0lax" style="background-color: lightblue">Comentario (novedad)</th>
+                <th class="tg-0lax" style="background-color: lightblue">Valor (opcional)</th>
+                <th class="tg-0lax" style="background-color: lightblue">Carga en % (opcional)</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for ($index = 0; $index < count(json_decode($formulario_vistas, true)); $index++)
+                    @foreach (json_decode($formulario_vistas)[$index] as $form)
+                        <tr>
+                        <td class="tg-0lax">{{ $form->tipo_verificacion }}</td>
+                        <td class="tg-0lax">{{ $form->respuesta }}</td>
+                        <td class="tg-0lax">{{ $form->comentarios }}</td>
+                        <td class="tg-0lax">{{ $form->valor }}</td>
+                        <td class="tg-0lax">{{ $form->carga }}</td>
+                        </tr>    
+                    @endforeach
+                @endfor
+            </tbody>
+        </table>
     </div>
 </body>

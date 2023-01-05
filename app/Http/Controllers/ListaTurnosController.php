@@ -9,6 +9,7 @@ use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class ListaTurnosController extends Controller
 {
@@ -294,6 +295,8 @@ class ListaTurnosController extends Controller
         foreach ($request->all() as $categoria) {
             array_push($formulario_vistas, $categoria['formularios']);
         }
+
+        Log::info($formulario_vistas);
 
         $fecha_formato = date('Y-m-d');
 

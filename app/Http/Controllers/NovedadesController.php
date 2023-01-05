@@ -213,6 +213,11 @@ class NovedadesController extends Controller {
             $query_base_buscar_novedades .= " AND estado_revision = " . $request->estado;
         }
 
+        /* Si existe un parámetro para buscar por estado de auditoría, se añade el fragmento a la query base. */
+        if (isset($request->estado_auditoria)) {
+            $query_base_buscar_novedades .= " AND estado_auditoria = " . $request->estado_auditoria;
+        }
+
         /* Si se quiere buscar por categoría, se añade para buscar por una categoría específica a la query base. */
         if (isset($request->categoria)) {
             $query_base_buscar_novedades .= " AND id_categoria_verificacion = " . $request->categoria . " ORDER BY id_categoria_verificacion";
@@ -542,5 +547,27 @@ class NovedadesController extends Controller {
         ]);
 
         return $pdf->download('prueba.pdf');
+    }
+
+    public function verNotaUltimaRevision(Request $request) {
+        $query_ultima_nota = "SELECT comentarios FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? 
+        ORDER BY id_cambio DESC LIMIT 1";
+
+        $result_ultima_nota = DB::connection()->select(DB::raw($query_ultima_nota), [
+            $request->id_novedad
+        ]);
+
+        return $result_ultima_nota;
+    }
+
+    public function verNotaUltimaAudtoria(Request $request) {
+        $query_ultima_auditoria = "SELECT comentarios_auditoria FROM entrega_turnos_bitacora_cambios_auditoria WHERE 
+        id_novedad = ? ORDER BY id_cambio_auditoria DESC LIMIT 1";
+
+        $result_ultima_auditoria = DB::connection()->select(DB::raw($query_ultima_auditoria), [
+            $request->id_novedad
+        ]);
+
+        return $result_ultima_auditoria;
     }
 }
