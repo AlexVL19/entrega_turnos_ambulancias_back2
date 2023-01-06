@@ -56,7 +56,7 @@ class ListaTurnosController extends Controller
     significaría que no hay novedades en esa verificación. */
     public function getNovedades(Request $request) {
 
-        $query_novedades = "SELECT id_verificacion_tipo, comentarios_novedad AS comentarios, 
+        $query_novedades = "SELECT id_novedad, id_verificacion_tipo, comentarios_novedad AS comentarios, 
         estado_revision, estado_auditoria, nota_revision, nota_auditoria, 
         fecha_revision, fecha_auditoria FROM entrega_turnos_novedades_bitacora WHERE id_bitacora = ?";
 
@@ -308,5 +308,20 @@ class ListaTurnosController extends Controller
         ]);
 
         return $pdf->download('prueba.pdf');
+    }
+
+    public function verAnexo(Request $request) {
+        $query_ver_anexo = "SELECT imagen_adjunta FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? LIMIT 1";
+    }
+
+    public function verCambiosNovedad(Request $request) {
+        $query_ver_cambios = "SELECT id_cambio, revision_despues, comentarios, fecha_registro 
+        FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? ORDER BY id_cambio DESC";
+
+        $result_ver_cambios = DB::connection()->select(DB::raw($query_ver_cambios), [
+            $request->id_novedad
+        ]);
+
+        return $result_ver_cambios;
     }
 }

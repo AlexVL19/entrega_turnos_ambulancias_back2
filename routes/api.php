@@ -67,6 +67,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/consultarTemperaturas', 'consultarTemperaturas');
         Route::post('/filtrarRegistros', 'filtroRegistros');
         Route::post('/verReporte', 'verReporte');
+        Route::post('/verCambiosNovedad', 'verCambiosNovedad');
     });
 
     Route::controller(NovedadesController::class)->group(function () {
