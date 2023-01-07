@@ -95,6 +95,8 @@ Route::controller(LoginController::class)->group(function () {
 Route::controller(ListaTurnosController::class)->group(function() {
     Route::post('/exportarDatos', 'exportarDatos');
     Route::post('/verPdfFormulario', 'verFormularioPDF');
+    Route::post('/verAnexo', 'verAnexo');
+    Route::post('/getExtension', 'getExtensionAnexo');
 });
 
 Route::controller(NovedadesController::class)->group(function() {

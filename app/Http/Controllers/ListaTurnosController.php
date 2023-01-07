@@ -311,11 +311,37 @@ class ListaTurnosController extends Controller
     }
 
     public function verAnexo(Request $request) {
-        $query_ver_anexo = "SELECT imagen_adjunta FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? LIMIT 1";
+        $query_ver_anexo = "SELECT imagen_adjunta FROM entrega_turnos_novedades_bitacora_cambios WHERE id_cambio = ? LIMIT 1";
+
+        $result_ver_anexo = DB::connection()->select(DB::raw($query_ver_anexo), [
+            $request->id_cambio
+        ]); 
+
+        $ruta_archivo = $result_ver_anexo[0]->imagen_adjunta;
+
+        if (Storage::disk('local')->exists($ruta_archivo)) {
+            return Storage::download($ruta_archivo);
+        }
+    }
+
+    public function getExtensionAnexo(Request $request) {
+        $query_get_extension = "SELECT imagen_adjunta FROM entrega_turnos_novedades_bitacora_cambios WHERE id_cambio = ? LIMIT 1";
+
+        $result_get_extension = DB::connection()->select(DB::raw($query_get_extension), [
+            $request->id_cambio
+        ]); 
+
+        $ruta_archivo = $result_get_extension[0]->imagen_adjunta;
+
+        if (Storage::disk('local')->exists($ruta_archivo)) {
+            $extension_anexo = pathinfo(storage_path($ruta_archivo), PATHINFO_EXTENSION);
+
+            return $extension_anexo;
+        }
     }
 
     public function verCambiosNovedad(Request $request) {
-        $query_ver_cambios = "SELECT id_cambio, revision_despues, comentarios, fecha_registro 
+        $query_ver_cambios = "SELECT id_cambio, revision_despues, comentarios, fecha_registro, imagen_adjunta 
         FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? ORDER BY id_cambio DESC";
 
         $result_ver_cambios = DB::connection()->select(DB::raw($query_ver_cambios), [
