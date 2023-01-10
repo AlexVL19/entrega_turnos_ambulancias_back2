@@ -502,6 +502,14 @@ class FormularioController extends Controller
         return $result_configs;
     }
 
+    public function getConfigsValidacionCambio() {
+        $query_configs_validacion = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formulario%'";
+
+        $result_configs_validacion = DB::connection()->select(DB::raw($query_configs_validacion));
+
+        return $result_configs_validacion;
+    }
+
     /* Consigue los tipos de productos para aseo */
     public function getTiposProductosAseo() {
         $query_tipos_productos = "SELECT * FROM entrega_turnos_tipos_productos_aseo";
