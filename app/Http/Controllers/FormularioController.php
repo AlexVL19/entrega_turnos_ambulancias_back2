@@ -171,8 +171,9 @@ class FormularioController extends Controller
                 ]);
             }
 
-            /* Consigue la última fecha de vencimiento del extintor de la móvil*/
-            $query_extintores = "SELECT fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
+            /* Consigue la última fecha de vencimiento del extintor de la móvil. Si la móvil es una ambulancia se requiere las fechas
+            de vencimiento de ambos extintores. */
+            $query_extintores = "SELECT fecha_vencimiento_extintor1 AS fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
             ORDER BY id_extintor DESC LIMIT 1";
 
             $result_extintores = DB::connection()->select(DB::raw($query_extintores), [
@@ -183,6 +184,23 @@ class FormularioController extends Controller
                array_push($result_extintores, [
                 "fecha_vencimiento" => '--'
                ]);
+            }
+
+            $query_segundo_extintor = "SELECT fecha_vencimiento_extintor2 AS fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
+            ORDER BY id_extintor DESC LIMIT 1";
+
+            $result_segundo_extintor = DB::connection()->select(DB::raw($query_segundo_extintor), [
+                $id_movil
+            ]);
+
+            if (count($result_extintores) == 0) {
+                array_push($result_segundo_extintor, [
+                    "fecha_vencimiento" => '--'
+                ]);
+            }
+
+            if ($result_segundo_extintor[0]->fecha_vencimiento == null) {
+                $result_segundo_extintor[0]->fecha_vencimiento = '--';
             }
 
 
@@ -264,6 +282,7 @@ class FormularioController extends Controller
                 return response(json_encode([
                     "fecha_soat" => $result_soat,
                     "fecha_extintor" => $result_extintores,
+                    "fecha_segundo_extintor" => $result_segundo_extintor,
                     "revision_tecno" => $result_tecnomecanica,
                     "cambios_hidraulica" => $result_cambios_hidraulica,
                     "cambios_aceite" => $result_cambios_aceite,
