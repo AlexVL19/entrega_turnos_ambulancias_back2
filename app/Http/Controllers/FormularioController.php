@@ -154,6 +154,24 @@ class FormularioController extends Controller
            }
     }
 
+    public function getFechasProxCambio ($id_movil) {
+        if (isset($id_movil)) {
+            $query_prox_cambio_hidraulica = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio 
+            FROM movil_cambios_aceite_hidraulico WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
+
+            $result_prox_cambio_hidraulica = DB::connection()->select(DB::raw($query_prox_cambio_hidraulica), [
+                $id_movil
+            ]);
+
+            if (count($result_prox_cambio_hidraulica) == 0) {
+                array_push($result_prox_cambio_hidraulica, [
+                    "fecha_proximo_cambio" => '--',
+                    "kilometraje_proximo_cambio" => '--'
+                ]);
+            }
+        }
+    }
+
     public function getAmbulanceData ($id_movil) {
 
         if (isset($id_movil)) {
