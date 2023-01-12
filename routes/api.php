@@ -34,6 +34,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('insertIntoMain', 'insertIntoMainBitacora');
         Route::get('/getCategories', 'getCategories');
         Route::get('getAmbulanceData/{movil}', 'getAmbulanceData');
+        Route::get('/getProximoCambio/{movil}', 'getFechasProxCambio');
         Route::post('/getCargas', 'getEquiposConCarga');
         Route::put('/setCargasFinales', 'setCargasFinales');
         Route::get('/getConfigs', 'getConfigs');

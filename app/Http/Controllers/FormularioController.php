@@ -169,6 +169,55 @@ class FormularioController extends Controller
                     "kilometraje_proximo_cambio" => '--'
                 ]);
             }
+
+            $query_prox_cambio_aceite = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio FROM movil_cambios_aceite_motor 
+            WHERE id_equipo = ? ORDER BY id_cambio_aceite_motor DESC LIMIT 1";
+
+            $result_prox_cambio_aceite = DB::connection()->select(DB::raw($query_prox_cambio_aceite), [
+                $id_movil
+            ]);
+
+            if (count($result_prox_cambio_aceite) == 0) {
+                array_push($result_prox_cambio_aceite, [
+                    "fecha_proximo_cambio" => '--',
+                    "kilometraje_proximo_cambio" => '--'
+                ]);
+            }
+
+            $query_prox_cambio_frenos = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio FROM movil_cambios_frenos WHERE 
+            id_equipo = ? ORDER BY id_cambio_frenos DESC LIMIT 1";
+
+            $result_prox_cambio_frenos = DB::connection()->select(DB::raw($query_prox_cambio_frenos), [
+                $id_movil
+            ]);
+
+            if (count($result_prox_cambio_frenos) == 0) {
+                array_push($result_prox_cambio_frenos, [
+                    "fecha_proximo_cambio" => '--',
+                    "kilometraje_proximo_cambio" => '--'
+                ]);
+            }
+
+            $query_prox_cambio_suspension = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio FROM movil_cambios_suspension 
+            WHERE id_equipo = ? ORDER BY id_cambio_suspension DESC LIMIT 1";
+
+            $result_prox_cambio_suspension = DB::connection()->select(DB::raw($query_prox_cambio_suspension), [
+                $id_movil
+            ]);
+
+            if (count($result_prox_cambio_suspension) == 0) {
+                array_push($result_prox_cambio_suspension, [
+                    "fecha_proximo_cambio" => '--',
+                    "kilometraje_proximo_cambio" => '--'
+                ]);
+            }
+
+            return response(json_encode([
+                "prox_cambio_hidraulica" => $result_prox_cambio_hidraulica,
+                "prox_cambio_aceite" => $result_prox_cambio_aceite,
+                "prox_cambio_frenos" => $result_prox_cambio_frenos,
+                "prox_cambio_suspension" => $result_prox_cambio_suspension
+            ]));
         }
     }
 
