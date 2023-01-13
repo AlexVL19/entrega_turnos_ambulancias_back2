@@ -254,10 +254,11 @@ class VistaController extends Controller {
         if (count($request->all()) > 0) {
 
             //Actualiza el registro en bitácora con el ID de turno especificado para que incluya ese comentario
-            $query_actualizacion = "UPDATE entrega_turnos_bitacora SET comentarios_entregado = ? WHERE id_turno = ?";
+            $query_actualizacion = "UPDATE entrega_turnos_bitacora SET comentarios_entregado = ?, kilometraje_entregado = ? WHERE id_turno = ?";
 
             $result_actualizacion = DB::connection()->select(DB::raw($query_actualizacion), [
                 $request->comentarios_entregado, 
+                $request->kilometraje_entregado,
                 $request->id_turno
             ]);
         }
