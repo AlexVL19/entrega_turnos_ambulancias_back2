@@ -674,27 +674,27 @@ class FormularioController extends Controller
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         foreach ($request->all() as $novedad) {
-
-            $query_verificar_novedades = "SELECT id_novedad FROM entrega_turnos_novedades_bitacora WHERE 
-            id_movil = ? AND id_verificacion_tipo = ? AND NOT estado_auditoria = 1";
-
-            $result_verificar_novedades = DB::connection()->select(DB::raw($query_verificar_novedades), [
+            $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
+                $novedad["id_bitacora"],
+                $novedad["id_turno"],
                 $novedad["id_movil"],
-                $novedad["id_verificacion_tipo"]
+                $novedad["id_auxiliar"],
+                $novedad["id_conductor"],
+                $novedad["id_verificacion_tipo"],
+                $novedad["id_categoria_verificacion"],
+                $novedad["comentarios_novedad"]
             ]);
-
-            if (count($result_verificar_novedades) == 0) {
-                $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
-                    $novedad["id_bitacora"],
-                    $novedad["id_turno"],
-                    $novedad["id_movil"],
-                    $novedad["id_auxiliar"],
-                    $novedad["id_conductor"],
-                    $novedad["id_verificacion_tipo"],
-                    $novedad["id_categoria_verificacion"],
-                    $novedad["comentarios_novedad"]
-                ]);
-            }
         }
+    }
+
+    public function getNovedadesMovil(Request $request) {
+        $query_encontrar_novedades = "SELECT DISTINCT id_verificacion_tipo, comentarios_novedad, fecha_creacion FROM 
+        entrega_turnos_novedades_bitacora WHERE estado_auditoria = 0 AND id_movil = ?";
+
+        $result_encontrar_novedades = DB::connection()->select(DB::raw($query_encontrar_novedades), [
+            $request->id_movil
+        ]);
+
+        return $result_encontrar_novedades;
     }
 }
