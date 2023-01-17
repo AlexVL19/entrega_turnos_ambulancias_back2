@@ -688,7 +688,7 @@ class FormularioController extends Controller
     }
 
     public function getNovedadesMovil(Request $request) {
-        $query_encontrar_novedades = "SELECT DISTINCT id_verificacion_tipo, comentarios_novedad, fecha_creacion FROM 
+        $query_encontrar_novedades = "SELECT id_verificacion_tipo, comentarios_novedad, fecha_creacion FROM 
         entrega_turnos_novedades_bitacora WHERE estado_auditoria = 0 AND id_movil = ?";
 
         $result_encontrar_novedades = DB::connection()->select(DB::raw($query_encontrar_novedades), [
