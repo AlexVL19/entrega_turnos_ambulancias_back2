@@ -114,7 +114,7 @@ class NovedadesController extends Controller {
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
-                $request->autor_cambio,
+                auth()->user()->Id,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
@@ -161,7 +161,7 @@ class NovedadesController extends Controller {
 
             $result_agregar_cambio = DB::connection()->select(DB::raw($query_agregar_cambio), [
                 $request->id_novedad,
-                $request->autor_cambio,
+                auth()->user()->Id,
                 $request->estado_antiguo,
                 $request->estado_nuevo,
                 $request->nota_revision,
@@ -297,7 +297,7 @@ class NovedadesController extends Controller {
             $request->id_novedad,
             $request->auditoria,
             $request->comentarios,
-            $request->autor_cambio
+            auth()->user()->Id
         ]);
 
 
@@ -431,6 +431,75 @@ class NovedadesController extends Controller {
         $config_version = "";
         $config_estandar = "";
         $config_pagina = "";
+        $base64_firma = "";
+        $base64_firma_auditor = "";
+
+        $nombre_apellido_solucion = "";
+        $cargo_solucion = "";
+        $cedula_solucion = "";
+        $nombre_apellido_auditor = "";
+        $cargo_auditor = "";
+        $cedula_auditor = "";
+
+        $query_encontrar_usuario_cambio = "SELECT id_autor_cambio FROM 
+        entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? ORDER BY id_cambio DESC LIMIT 1";
+
+        $result_encontrar_usuario_cambio = DB::connection()->select(DB::raw($query_encontrar_usuario_cambio), [
+            $request->id_novedad
+        ]);
+
+        $query_firma_usuario = "SELECT nombre, documento, apellido, cargo, firma_solucion_pdf FROM usuarios_app WHERE Id = ?";
+
+        if (count($result_encontrar_usuario_cambio) !== 0 && $result_encontrar_usuario_cambio[0]->id_autor_cambio !== null) {
+            $result_firma_usuario = DB::connection()->select(DB::raw($query_firma_usuario), [
+                $result_encontrar_usuario_cambio[0]->id_autor_cambio
+            ]);
+
+            if (count($result_firma_usuario) !== 0 && $result_firma_usuario[0]->firma_solucion_pdf !== null) {
+
+                $nombre_apellido_solucion = $result_firma_usuario[0]->nombre . " " . $result_firma_usuario[0]->apellido;
+                $cedula_solucion = $result_firma_usuario[0]->documento;
+                $cargo_solucion = strtoupper($result_firma_usuario[0]->cargo);
+                
+                $ruta_firma = $result_firma_usuario[0]->firma_solucion_pdf;
+    
+                if (Storage::disk('local')->exists($ruta_firma)) {
+                    $archivo_firma = Storage::get($ruta_firma);
+    
+                    $base64_firma = base64_encode($archivo_firma);
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------
+
+        $query_encontrar_auditor_cambio  = "SELECT id_autor_cambio FROM entrega_turnos_bitacora_cambios_auditoria WHERE id_novedad = ? 
+        ORDER BY id_cambio_auditoria DESC LIMIT 1";
+
+        $result_encontrar_auditor_cambio = DB::connection()->select(DB::raw($query_encontrar_auditor_cambio), [
+            $request->id_novedad
+        ]);
+
+        $query_firma_auditor = "SELECT nombre, documento, apellido, cargo, firma_auditor_pdf FROM usuarios_app WHERE Id = ?";
+
+        if (count($result_encontrar_auditor_cambio) !== 0 && $result_encontrar_auditor_cambio[0]->id_autor_cambio !== null) {
+            $result_firma_auditor = DB::connection()->select(DB::raw($query_firma_auditor), [
+                $result_encontrar_auditor_cambio[0]->id_autor_cambio
+            ]);
+
+            if (count($result_firma_auditor) !== 0 && $result_firma_auditor[0]->firma_auditor_pdf !== null) {
+                $nombre_apellido_auditor = $result_firma_auditor[0]->nombre . " " . $result_firma_auditor[0]->apellido;
+                $cedula_auditor = $result_firma_auditor[0]->documento;
+                $cargo_auditor = strtoupper($result_firma_auditor[0]->cargo);
+                $ruta_firma_auditor = $result_firma_auditor[0]->firma_auditor_pdf;
+    
+                if (Storage::disk('local')->exists($ruta_firma_auditor)) {
+                    $archivo_firma_auditor = Storage::get($ruta_firma_auditor);
+    
+                    $base64_firma_auditor = base64_encode($archivo_firma_auditor);
+                }
+            }
+        }
 
         $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
 
@@ -481,7 +550,15 @@ class NovedadesController extends Controller {
             'placa' => $placa,
             'fecha_formato' => $fecha_formato,
             'descripcion_solucion' => $descripcion_solucion,
-            'archivo_base64' => $archivo_base64
+            'archivo_base64' => $archivo_base64,
+            'base64_firma' => $base64_firma !== ""? $base64_firma : "",
+            'base64_firma_auditor' => $base64_firma_auditor !== ""? $base64_firma_auditor : "",
+            'nombre_apellido_solucion' => $nombre_apellido_solucion,
+            'cargo_solucion' => $cargo_solucion,
+            'cedula_solucion' => $cedula_solucion,
+            'nombre_apellido_auditor' => $nombre_apellido_auditor,
+            'cargo_auditor' => $cargo_auditor,
+            'cedula_auditor' => $cedula_auditor
         ]);
 
         return $pdf->download('prueba.pdf');
@@ -492,6 +569,76 @@ class NovedadesController extends Controller {
         $config_version = "";
         $config_estandar = "";
         $config_pagina = "";
+
+        $base64_firma = "";
+        $base64_firma_auditor = "";
+
+        $nombre_apellido_solucion = "";
+        $cargo_solucion = "";
+        $cedula_solucion = "";
+        $nombre_apellido_auditor = "";
+        $cargo_auditor = "";
+        $cedula_auditor = "";
+
+        $query_encontrar_usuario_cambio = "SELECT id_autor_cambio FROM 
+        entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? ORDER BY id_cambio DESC LIMIT 1";
+
+        $result_encontrar_usuario_cambio = DB::connection()->select(DB::raw($query_encontrar_usuario_cambio), [
+            $request->id_novedad
+        ]);
+
+        $query_firma_usuario = "SELECT nombre, documento, apellido, cargo, firma_solucion_pdf FROM usuarios_app WHERE Id = ?";
+
+        if (count($result_encontrar_usuario_cambio) !== 0 && $result_encontrar_usuario_cambio[0]->id_autor_cambio !== null) {
+            $result_firma_usuario = DB::connection()->select(DB::raw($query_firma_usuario), [
+                $result_encontrar_usuario_cambio[0]->id_autor_cambio
+            ]);
+
+            if (count($result_firma_usuario) !== 0 && $result_firma_usuario[0]->firma_solucion_pdf !== null) {
+
+                $nombre_apellido_solucion = $result_firma_usuario[0]->nombre . " " . $result_firma_usuario[0]->apellido;
+                $cedula_solucion = $result_firma_usuario[0]->documento;
+                $cargo_solucion = strtoupper($result_firma_usuario[0]->cargo);
+                
+                $ruta_firma = $result_firma_usuario[0]->firma_solucion_pdf;
+    
+                if (Storage::disk('local')->exists($ruta_firma)) {
+                    $archivo_firma = Storage::get($ruta_firma);
+    
+                    $base64_firma = base64_encode($archivo_firma);
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------
+
+        $query_encontrar_auditor_cambio  = "SELECT id_autor_cambio FROM entrega_turnos_bitacora_cambios_auditoria WHERE id_novedad = ? 
+        ORDER BY id_cambio_auditoria DESC LIMIT 1";
+
+        $result_encontrar_auditor_cambio = DB::connection()->select(DB::raw($query_encontrar_auditor_cambio), [
+            $request->id_novedad
+        ]);
+
+        $query_firma_auditor = "SELECT nombre, documento, apellido, cargo, firma_auditor_pdf FROM usuarios_app WHERE Id = ?";
+
+        if (count($result_encontrar_auditor_cambio) !== 0 && $result_encontrar_auditor_cambio[0]->id_autor_cambio !== null) {
+            $result_firma_auditor = DB::connection()->select(DB::raw($query_firma_auditor), [
+                $result_encontrar_auditor_cambio[0]->id_autor_cambio
+            ]);
+
+            if (count($result_firma_auditor) !== 0 && $result_firma_auditor[0]->firma_auditor_pdf !== null) {
+                $nombre_apellido_auditor = $result_firma_auditor[0]->nombre . " " . $result_firma_auditor[0]->apellido;
+                $cedula_auditor = $result_firma_auditor[0]->documento;
+                $cargo_auditor = strtoupper($result_firma_auditor[0]->cargo);
+                $ruta_firma_auditor = $result_firma_auditor[0]->firma_auditor_pdf;
+    
+                if (Storage::disk('local')->exists($ruta_firma_auditor)) {
+                    $archivo_firma_auditor = Storage::get($ruta_firma_auditor);
+    
+                    $base64_firma_auditor = base64_encode($archivo_firma_auditor);
+                }
+            }
+        }
 
         $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
 
@@ -543,7 +690,15 @@ class NovedadesController extends Controller {
             'placa' => $placa,
             'fecha_formato' => $fecha_formato,
             'descripcion_solucion' => $descripcion_solucion,
-            'archivo_base64' => $archivo_base64
+            'archivo_base64' => $archivo_base64,
+            'base64_firma' => $base64_firma !== ""? $base64_firma : "",
+            'base64_firma_auditor' => $base64_firma_auditor !== ""? $base64_firma_auditor : "",
+            'nombre_apellido_solucion' => $nombre_apellido_solucion,
+            'cargo_solucion' => $cargo_solucion,
+            'cedula_solucion' => $cedula_solucion,
+            'nombre_apellido_auditor' => $nombre_apellido_auditor,
+            'cargo_auditor' => $cargo_auditor,
+            'cedula_auditor' => $cedula_auditor
         ]);
 
         return $pdf->download('prueba.pdf');

@@ -63,10 +63,6 @@
             <b>PLACA DEL VEHICULO: </b> {{ json_decode($placa, true)[0]['placa'] }}
         </div>
 
-        <div style="justify-content: start; margin-bottom: 30px">
-            <b>FIRMA DEL LIDER DE MANTENIMIENTO: </b>
-        </div>
-
         <div style="justify-content: center; text-align: center;">
             <b>DESCRIPCION DE LA AUDITORIA
                 <div style="margin-top: 10px; text-align: justify; border: 1px black solid; height: 200px; padding: 10px">
@@ -75,8 +71,16 @@
             </b>
         </div>
 
+        <div style="justify-content: start; margin-bottom: 30px; margin-top: 30px; display: flex;">
+            <b>{{ $cargo_solucion }} (SOLUCIONA): </b>
+            <div><img src="data:image/png;base64,{{ $base64_firma }}" style="height: 90px; width: 280px;"></div>
+            <div>{{ $nombre_apellido_solucion }}, CC {{ $cedula_solucion }}</div>
+        </div>
+
         <div style="justify-content: start; margin-top: 30px">
-            <b>FIRMA DEL COORDINADOR DE CALIDAD: </b>
+            <b>{{ $cargo_auditor }} (AUDITA): </b>
+            <div><img src="data:image/png;base64,{{ $base64_firma_auditor }}" style="height: 90px; width: 280px;"></div>
+            <div>{{ $nombre_apellido_auditor }}, CC {{ $cedula_auditor }}</div>
         </div>  
     </div>
 </body>
