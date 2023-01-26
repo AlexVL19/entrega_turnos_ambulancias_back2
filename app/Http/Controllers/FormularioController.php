@@ -10,19 +10,62 @@ use Illuminate\Support\Str;
 class FormularioController extends Controller
 {
 
-    public function getVerifications () {
+    public function getVerifications (Request $request) {
 
-        //Se consigue los tipos de verificación
-        $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo";
+        $query_encontrar_tipo_movil = "SELECT es_movil FROM equipos WHERE ID_Equipo = ?";
 
-        //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
-        $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
+        $result_encontrar_tipo_movil = DB::connection()->select(DB::raw($query_encontrar_tipo_movil), [
+            $request->id_movil
+        ]);
 
-        //Se agrupan las respuestas en un JSON, agrupando las verificaciones con su respectiva clave.
+        if ($result_encontrar_tipo_movil[0]->es_movil == 0) {
+            //Se consigue los tipos de verificación
+            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1";
+
+            //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
+            $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
+
+            //Se agrupan las respuestas en un JSON, agrupando las verificaciones con su respectiva clave.
+            return response(json_encode([
+                "verificaciones" => $result_verificaciones,
+                "contador" => count($result_verificaciones)
+            ]));
+        }
+
+        else if ($result_encontrar_tipo_movil[0]->es_movil == 1) {
+            //Se consigue los tipos de verificación
+            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1 AND tipo_movil = 0";
+
+            //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
+            $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
+
+            //Se agrupan las respuestas en un JSON, agrupando las verificaciones con su respectiva clave.
+            return response(json_encode([
+                "verificaciones" => $result_verificaciones,
+                "contador" => count($result_verificaciones)
+            ]));
+        }
+    }
+
+    public function getAllVerifications() {
+        $query_verificaciones_todos = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1";
+
+        $result_verificaciones_todos = DB::connection()->select(DB::raw($query_verificaciones_todos));
+
         return response(json_encode([
-            "verificaciones" => $result_verificaciones,
-            "contador" => count($result_verificaciones)
+            "verificaciones" => $result_verificaciones_todos,
+            "contador" => count($result_verificaciones_todos)
         ]));
+    }
+
+    public function comprobarTipoMovil(Request $request) {
+        $query_comprobar_tipo_movil = "SELECT es_movil FROM equipos WHERE ID_Equipo = ?";
+
+        $result_comprobar_tipo_movil = DB::connection()->select(DB::raw($query_comprobar_tipo_movil), [
+            $request->id_movil
+        ]);
+
+        return $result_comprobar_tipo_movil;
     }
 
     public function getCategories() {

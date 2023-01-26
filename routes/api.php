@@ -28,8 +28,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 /* Se utiliza el middleware de Sanctum para proteger las siguientes rutas */
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::controller(FormularioController::class)->group(function () {
-        Route::get('/getVerifications', 'getVerifications');
+        Route::post('/getVerifications', 'getVerifications');
+        Route::get('/getAllVerifications', 'getAllVerifications');
         Route::get('/getResponses', 'getResponses');
+        Route::post('/comprobarTipoMovil', 'comprobarTipoMovil');
         Route::post('/insertIntoBitacora', 'insertIntoBitacora');
         Route::post('insertIntoMain', 'insertIntoMainBitacora');
         Route::get('/getCategories', 'getCategories');
