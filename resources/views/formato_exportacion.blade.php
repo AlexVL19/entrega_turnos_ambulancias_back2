@@ -76,11 +76,5 @@
             <div><img src="data:image/png;base64,{{ $base64_firma }}" style="height: 90px; width: 280px;"></div>
             <div>{{ $nombre_apellido_solucion }}, CC {{ $cedula_solucion }}</div>
         </div>
-
-        <div style="justify-content: start; margin-top: 30px">
-            <b>{{ $cargo_auditor }} (AUDITA): </b>
-            <div><img src="data:image/png;base64,{{ $base64_firma_auditor }}" style="height: 90px; width: 280px;"></div>
-            <div>{{ $nombre_apellido_auditor }}, CC {{ $cedula_auditor }}</div>
-        </div>  
     </div>
 </body>

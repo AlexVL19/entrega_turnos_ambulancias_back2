@@ -18,7 +18,7 @@ class FormularioController extends Controller
             $request->id_movil
         ]);
 
-        if ($result_encontrar_tipo_movil[0]->es_movil == 0) {
+        if ($result_encontrar_tipo_movil[0]->es_movil == 1) {
             //Se consigue los tipos de verificación
             $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1";
 
@@ -32,7 +32,7 @@ class FormularioController extends Controller
             ]));
         }
 
-        else if ($result_encontrar_tipo_movil[0]->es_movil == 1) {
+        else if ($result_encontrar_tipo_movil[0]->es_movil == 0) {
             //Se consigue los tipos de verificación
             $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1 AND tipo_movil = 0";
 
@@ -65,7 +65,7 @@ class FormularioController extends Controller
             $request->id_movil
         ]);
 
-        return $result_comprobar_tipo_movil;
+        return $result_comprobar_tipo_movil[0]->es_movil;
     }
 
     public function getCategories() {
@@ -267,6 +267,12 @@ class FormularioController extends Controller
     public function getAmbulanceData ($id_movil) {
 
         if (isset($id_movil)) {
+            $query_tipo_movil = "SELECT es_movil FROM equipos WHERE ID_Equipo = ?";
+
+            $result_tipo_movil = DB::connection()->select(DB::raw($query_tipo_movil), [
+                $id_movil
+            ]);
+
             /* Consigue la fecha de vencimiento del último soat registrado de la móvil */
             $query_soat = "SELECT fecha_vencimiento FROM movil_soat WHERE id_equipo = ? 
             ORDER BY id_soat DESC LIMIT 1";
@@ -296,21 +302,23 @@ class FormularioController extends Controller
                ]);
             }
 
-            $query_segundo_extintor = "SELECT fecha_vencimiento_extintor2 AS fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
-            ORDER BY id_extintor DESC LIMIT 1";
+            if ($result_tipo_movil[0]->es_movil == 1) {
+                $query_segundo_extintor = "SELECT fecha_vencimiento_extintor2 AS fecha_vencimiento FROM movil_extintores WHERE id_equipo = ? 
+                ORDER BY id_extintor DESC LIMIT 1";
 
-            $result_segundo_extintor = DB::connection()->select(DB::raw($query_segundo_extintor), [
-                $id_movil
-            ]);
-
-            if (count($result_extintores) == 0) {
-                array_push($result_segundo_extintor, [
-                    "fecha_vencimiento" => '--'
+                $result_segundo_extintor = DB::connection()->select(DB::raw($query_segundo_extintor), [
+                    $id_movil
                 ]);
-            }
 
-            if ($result_segundo_extintor[0]->fecha_vencimiento == null) {
-                $result_segundo_extintor[0]->fecha_vencimiento = '--';
+                if (count($result_extintores) == 0) {
+                    array_push($result_segundo_extintor, [
+                        "fecha_vencimiento" => '--'
+                    ]);
+                }
+
+                if ($result_segundo_extintor[0]->fecha_vencimiento == null) {
+                    $result_segundo_extintor[0]->fecha_vencimiento = '--';
+                }
             }
 
 
@@ -389,6 +397,8 @@ class FormularioController extends Controller
             }
 
             /* Devuelve todas las respuestas agrupadas en un JSON*/
+
+            if ($result_tipo_movil[0]->es_movil == 1) {
                 return response(json_encode([
                     "fecha_soat" => $result_soat,
                     "fecha_extintor" => $result_extintores,
@@ -399,6 +409,19 @@ class FormularioController extends Controller
                     "cambios_frenos" => $result_cambios_frenos,
                     "cambios_suspension" => $result_cambios_suspension
                 ]));
+            }
+
+            else {
+                return response(json_encode([
+                    "fecha_soat" => $result_soat,
+                    "fecha_extintor" => $result_extintores,
+                    "revision_tecno" => $result_tecnomecanica,
+                    "cambios_hidraulica" => $result_cambios_hidraulica,
+                    "cambios_aceite" => $result_cambios_aceite,
+                    "cambios_frenos" => $result_cambios_frenos,
+                    "cambios_suspension" => $result_cambios_suspension
+                ]));
+            }
             }
     }
 
