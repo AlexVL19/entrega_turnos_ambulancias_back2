@@ -258,7 +258,7 @@ class VistaController extends Controller {
 
             $result_actualizacion = DB::connection()->select(DB::raw($query_actualizacion), [
                 $request->comentarios_entregado, 
-                $request->kilometraje_entregado,
+                $request->kilometraje_recibido,
                 $request->id_turno
             ]);
         }

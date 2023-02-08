@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class FormularioController extends Controller
 {
@@ -20,7 +21,7 @@ class FormularioController extends Controller
 
         if ($result_encontrar_tipo_movil[0]->es_movil == 1) {
             //Se consigue los tipos de verificación
-            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1";
+            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1 AND NOT tipo_movil = 2";
 
             //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
             $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
@@ -34,7 +35,7 @@ class FormularioController extends Controller
 
         else if ($result_encontrar_tipo_movil[0]->es_movil == 0) {
             //Se consigue los tipos de verificación
-            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1 AND tipo_movil = 0";
+            $query_verificaciones = "SELECT id_verificacion_tipo, tipo_verificacion, id_categoria_verificacion, requiere_valores FROM entrega_turnos_verificacion_tipo WHERE estado = 1 AND tipo_movil = 0 OR tipo_movil = 2";
 
             //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
             $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
@@ -267,7 +268,7 @@ class FormularioController extends Controller
     public function getAmbulanceData ($id_movil) {
 
         if (isset($id_movil)) {
-            $query_tipo_movil = "SELECT es_movil FROM equipos WHERE ID_Equipo = ?";
+            $query_tipo_movil = "SELECT es_movil, tiene_hidraulica FROM equipos WHERE ID_Equipo = ?";
 
             $result_tipo_movil = DB::connection()->select(DB::raw($query_tipo_movil), [
                 $id_movil
@@ -336,19 +337,21 @@ class FormularioController extends Controller
                 ]);
             }
 
-            /* Consigue el último cambio de hidráulica de la móvil */
-            $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
-            WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
+            if ($result_tipo_movil[0]->tiene_hidraulica == 1) {
+                /* Consigue el último cambio de hidráulica de la móvil */
+                $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
+                WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
-            $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
-                $id_movil
-            ]);
-
-            if (count($result_cambios_hidraulica) == 0) {
-                array_push($result_cambios_hidraulica, [
-                    "fecha_ultimo_cambio" => '--',
-                    "kilometraje_ultimo_cambio" => '--'
+                $result_cambios_hidraulica = DB::connection()->select(DB::raw($query_cambios_hidraulica), [
+                    $id_movil
                 ]);
+
+                if (count($result_cambios_hidraulica) == 0) {
+                    array_push($result_cambios_hidraulica, [
+                        "fecha_ultimo_cambio" => '--',
+                        "kilometraje_ultimo_cambio" => '--'
+                    ]);
+                }
             }
 
             /* Consigue el último cambio de aceite realizado en la móvil */
@@ -762,5 +765,35 @@ class FormularioController extends Controller
         ]);
 
         return $result_encontrar_novedades;
+    }
+
+    public function insertarFotosReporte(Request $request) {
+
+        $ruta_imagen = null;
+
+        $query_insertar_fotos_reporte = "INSERT INTO entrega_turnos_formulario_fotos (id_bitacora, ruta_foto) VALUES (?, ?)";
+
+        foreach ($request->all() as $foto) {
+            if ($foto["ruta_foto"] !== null) {
+                $archivo = $foto["ruta_foto"];
+
+                $nombre_archivo = 'anexo_reporte_danos';
+
+                $fecha_carpeta = date("Y-m-d");
+
+                $fecha_archivo = date("Y-m-d_h:i:s");
+
+                $ruta_imagen = 'archivos_reporte_danos/' . $foto["id_bitacora"] . '_' . $fecha_carpeta . '/' . $nombre_archivo . '_' . $fecha_archivo;
+
+                Storage::disk('local')->put($ruta_imagen, $archivo);
+            }
+
+            $result_insertar_fotos_reporte = DB::connection()->select(DB::raw($query_insertar_fotos_reporte), [
+                $foto["id_bitacora"],
+                $ruta_imagen
+            ]);
+
+            return $result_insertar_fotos_reporte;
+        }
     }
 }

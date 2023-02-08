@@ -48,6 +48,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/validarJornada', 'validarJornada');
         Route::post('/insertNovedades', 'insertarNovedad');
         Route::post('/getNovedadesMovil', 'getNovedadesMovil');
+        Route::post('/insertarFotosReporte', 'insertarFotosReporte');
     });
 
     Route::controller(LoginController::class)->group(function () {

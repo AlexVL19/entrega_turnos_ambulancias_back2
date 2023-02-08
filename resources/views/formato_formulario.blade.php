@@ -31,7 +31,7 @@
                 <img src="data:image/png;base64,{{ $archivo_base64 }}" style="height: 100px; width: 100px; padding: 10px; margin-left: 10px">
             </td>
             <td class="tg-0lax" colspan="2" style="text-align: center; align-content: center">
-                FORMULARIO LLENADO
+                FORMULARIO ENTREGA DE TURNO
             </td>
             <td class="tg-0lax" style="text-align: center; align-content: center">
                 <div>FECHA</div>
@@ -40,6 +40,26 @@
           </tr>
         </thead>
     </table>
+
+    <div style="font-family: Arial, sans-serif; margin-top: 20px">
+        <b>INFORMACIÓN DEL TURNO:</b>
+
+        <br>
+
+        <div style="margin-top: 10px">Número de turno: </div>
+        <div style="margin-top: 10px">Tipo de turno: </div>
+        <div style="margin-top: 10px">Fecha de apertura: </div>
+        <div style="margin-top: 10px">Nombre de móvil: </div>
+        <div style="margin-top: 10px">Placa de móvil: </div>
+        
+        <br>
+
+        <div>Médico: </div>
+        <div style="margin-top: 10px">Conductor: </div>
+        <div style="margin-top: 10px">Auxiliar: </div>
+    </div>
+
+
 
     <div style="margin-top: 40px">
         <table class="tg">

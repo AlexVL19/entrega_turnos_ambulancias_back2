@@ -712,6 +712,16 @@ class NovedadesController extends Controller {
             $request->id_novedad
         ]);
 
+        if ($result_ultima_nota !== []) {
+            if ($result_ultima_nota[0]->comentarios == null) {
+                $result_ultima_nota[0]->comentarios = "";
+            }
+    
+            if ($result_ultima_nota[0]->revision_despues == null) {
+                $result_ultima_nota[0]->revision_despues = "";
+            }
+        }
+
         return $result_ultima_nota;
     }
 
@@ -722,6 +732,14 @@ class NovedadesController extends Controller {
         $result_ultima_auditoria = DB::connection()->select(DB::raw($query_ultima_auditoria), [
             $request->id_novedad
         ]);
+
+        if ($result_ultima_auditoria !== []) {
+
+            if ($result_ultima_auditoria[0]->comentarios_auditoria == null) {
+                $result_ultima_auditoria[0]->comentarios_auditoria = "";
+            }
+
+        }
 
         return $result_ultima_auditoria;
     }
