@@ -705,7 +705,7 @@ class NovedadesController extends Controller {
     }
 
     public function verNotaUltimaRevision(Request $request) {
-        $query_ultima_nota = "SELECT comentarios, revision_despues FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? 
+        $query_ultima_nota = "SELECT id_cambio, comentarios, revision_despues, imagen_adjunta FROM entrega_turnos_novedades_bitacora_cambios WHERE id_novedad = ? 
         ORDER BY id_cambio DESC LIMIT 1";
 
         $result_ultima_nota = DB::connection()->select(DB::raw($query_ultima_nota), [

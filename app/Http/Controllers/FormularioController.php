@@ -7,13 +7,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class FormularioController extends Controller
 {
 
     public function getVerifications (Request $request) {
 
-        $query_encontrar_tipo_movil = "SELECT es_movil FROM equipos WHERE ID_Equipo = ?";
+        $contador = 0;
+
+        $result_verificaciones = [];
+
+        $query_encontrar_tipo_movil = "SELECT es_movil, tiene_hidraulica FROM equipos WHERE ID_Equipo = ?";
 
         $result_encontrar_tipo_movil = DB::connection()->select(DB::raw($query_encontrar_tipo_movil), [
             $request->id_movil
@@ -25,6 +30,16 @@ class FormularioController extends Controller
 
             //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
             $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
+
+            if ($result_encontrar_tipo_movil[0]->tiene_hidraulica !== null) {
+                foreach ($result_verificaciones as $verificacion) {
+                    if ($result_encontrar_tipo_movil[0]->tiene_hidraulica == 0 && str_contains($verificacion->tipo_verificacion, 'aceite hidráulico')) {
+                        array_splice($result_verificaciones, $contador, 1);
+                    }
+    
+                    $contador++;
+                }
+            }
 
             //Se agrupan las respuestas en un JSON, agrupando las verificaciones con su respectiva clave.
             return response(json_encode([
@@ -39,6 +54,16 @@ class FormularioController extends Controller
 
             //Se ejecutan la query almacenándola en una variable que contendrá una respuesta
             $result_verificaciones = DB::connection()->select(DB::raw($query_verificaciones));
+
+            if ($result_encontrar_tipo_movil[0]->tiene_hidraulica !== null) {
+                foreach ($result_verificaciones as $verificacion) {
+                    if ($result_encontrar_tipo_movil[0]->tiene_hidraulica == 0 && str_contains($verificacion->tipo_verificacion, 'aceite hidráulico')) {
+                        array_splice($result_verificaciones, $contador, 1);
+                    }
+    
+                    $contador++;
+                }
+            }
 
             //Se agrupan las respuestas en un JSON, agrupando las verificaciones con su respectiva clave.
             return response(json_encode([
@@ -67,6 +92,16 @@ class FormularioController extends Controller
         ]);
 
         return $result_comprobar_tipo_movil[0]->es_movil;
+    }
+
+    public function comprobarHidraulica(Request $request) {
+        $query_comprobar_hidraulica = "SELECT tiene_hidraulica FROM equipos WHERE ID_Equipo = ?";
+
+        $result_comprobar_hidraulica = DB::connection()->select(DB::raw($query_comprobar_hidraulica), [
+            $request->id_movil
+        ]);
+
+        return $result_comprobar_hidraulica[0]->tiene_hidraulica;
     }
 
     public function getCategories() {
@@ -199,15 +234,33 @@ class FormularioController extends Controller
     }
 
     public function getFechasProxCambio ($id_movil) {
-        if (isset($id_movil)) {
-            $query_prox_cambio_hidraulica = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio 
-            FROM movil_cambios_aceite_hidraulico WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
 
-            $result_prox_cambio_hidraulica = DB::connection()->select(DB::raw($query_prox_cambio_hidraulica), [
+        if (isset($id_movil)) {
+            $query_tipo_movil = "SELECT es_movil, tiene_hidraulica FROM equipos WHERE ID_Equipo = ?";
+
+            $result_tipo_movil = DB::connection()->select(DB::raw($query_tipo_movil), [
                 $id_movil
             ]);
 
-            if (count($result_prox_cambio_hidraulica) == 0) {
+            $query_prox_cambio_hidraulica = "SELECT fecha_proximo_cambio, kilometraje_proximo_cambio 
+            FROM movil_cambios_aceite_hidraulico WHERE id_equipo = ? ORDER BY id_cambio_aceite_hidraulico DESC LIMIT 1";
+
+            $result_prox_cambio_hidraulica = [];
+
+            if ($result_tipo_movil[0]->tiene_hidraulica == 1) {
+                $result_prox_cambio_hidraulica = DB::connection()->select(DB::raw($query_prox_cambio_hidraulica), [
+                    $id_movil
+                ]);
+    
+                if (count($result_prox_cambio_hidraulica) == 0) {
+                    array_push($result_prox_cambio_hidraulica, [
+                        "fecha_proximo_cambio" => '--',
+                        "kilometraje_proximo_cambio" => '--'
+                    ]);
+                }
+            }
+
+            else if ($result_tipo_movil[0]->tiene_hidraulica == 0) {
                 array_push($result_prox_cambio_hidraulica, [
                     "fecha_proximo_cambio" => '--',
                     "kilometraje_proximo_cambio" => '--'
@@ -337,6 +390,8 @@ class FormularioController extends Controller
                 ]);
             }
 
+            $result_cambios_hidraulica = [];
+
             if ($result_tipo_movil[0]->tiene_hidraulica == 1) {
                 /* Consigue el último cambio de hidráulica de la móvil */
                 $query_cambios_hidraulica = "SELECT fecha_ultimo_cambio, kilometraje_ultimo_cambio FROM movil_cambios_aceite_hidraulico 
@@ -352,6 +407,13 @@ class FormularioController extends Controller
                         "kilometraje_ultimo_cambio" => '--'
                     ]);
                 }
+            }
+
+            else if ($result_tipo_movil[0]->tiene_hidraulica == 0) {
+                array_push($result_cambios_hidraulica, [
+                    "fecha_ultimo_cambio" => '--',
+                    "kilometraje_ultimo_cambio" => '--'
+                ]);
             }
 
             /* Consigue el último cambio de aceite realizado en la móvil */
@@ -773,27 +835,22 @@ class FormularioController extends Controller
 
         $query_insertar_fotos_reporte = "INSERT INTO entrega_turnos_formulario_fotos (id_bitacora, ruta_foto) VALUES (?, ?)";
 
-        foreach ($request->all() as $foto) {
-            if ($foto["ruta_foto"] !== null) {
-                $archivo = $foto["ruta_foto"];
+        for ($i = 0; $i < count($request->all()) - 1; $i++) {
 
-                $nombre_archivo = 'anexo_reporte_danos';
+            $archivo = $request->file('imagen' . $i);
 
-                $fecha_carpeta = date("Y-m-d");
+            $nombre_archivo = '_' . Str::random(10) . $archivo->getClientOriginalName();
 
-                $fecha_archivo = date("Y-m-d_h:i:s");
+            $fecha_carpeta = date('Y-m-d');
 
-                $ruta_imagen = 'archivos_reporte_danos/' . $foto["id_bitacora"] . '_' . $fecha_carpeta . '/' . $nombre_archivo . '_' . $fecha_archivo;
+            $ruta_imagen = 'archivos_reporte_danos/' . $request->id_bitacora . '_' . $fecha_carpeta . '/' . $nombre_archivo;
 
-                Storage::disk('local')->put($ruta_imagen, $archivo);
-            }
+            Storage::disk('local')->put($ruta_imagen, File::get($archivo));
 
             $result_insertar_fotos_reporte = DB::connection()->select(DB::raw($query_insertar_fotos_reporte), [
-                $foto["id_bitacora"],
+                $request->id_bitacora,
                 $ruta_imagen
             ]);
-
-            return $result_insertar_fotos_reporte;
         }
     }
 }

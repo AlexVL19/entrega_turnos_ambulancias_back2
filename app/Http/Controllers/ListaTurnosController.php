@@ -81,7 +81,7 @@ class ListaTurnosController extends Controller
     /* Consigue todo el formulario (Verificación, respuesta, comentarios si los hay, 
     valores si los hay, o cargas también) con base al ID de bitácora. */
     public function getFormulario(Request $request) {
-        $query_formulario = "SELECT id_verificacion_tipo, id_estado_verificacion, hay_comentarios, 
+        $query_formulario = "SELECT id_bitacora, id_verificacion_tipo, id_estado_verificacion, hay_comentarios, 
         comentarios, valor, carga_inicial FROM entrega_turnos_verificacion_bitacora
         WHERE id_bitacora = ?";
 
@@ -258,11 +258,45 @@ class ListaTurnosController extends Controller
         }
     }
 
+    public function verAnexosReporte(Request $request) {
+
+        $array_imagenes = [];
+
+        if ($request->danos_automotor !== 0) {
+            $query_anexos_reporte = "SELECT ruta_foto FROM entrega_turnos_formulario_fotos WHERE id_bitacora = ? AND ruta_foto IS NOT NULL";
+
+            $result_anexos_reporte = DB::connection()->select(DB::raw($query_anexos_reporte), [
+                $request->id_bitacora
+            ]);
+
+            foreach ($result_anexos_reporte as $anexo) {
+                $ruta_foto = $anexo->ruta_foto;
+
+                if (Storage::disk('local')->exists($ruta_foto)) {
+                    $archivo = Storage::get($ruta_foto);
+
+                    array_push($array_imagenes, [
+                        "archivo" => base64_encode($archivo),
+                        "mime" => Storage::mimeType($ruta_foto)
+                    ]);
+                }
+            }
+
+            return $array_imagenes;
+        }
+    }
+
     public function verFormularioPDF (Request $request) {
         $config_codigo = "";
         $config_version = "";
         $config_estandar = "";
         $formulario_vistas = [];
+        $id_bitacora = "";
+        $auxiliar = "";
+        $conductor = "";
+        $nom_movil = "";
+        $fecha_apertura = "";
+        $tipo_turno = "";
 
         $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
 
@@ -296,7 +330,68 @@ class ListaTurnosController extends Controller
             array_push($formulario_vistas, $categoria['formularios']);
         }
 
-        Log::info($formulario_vistas);
+        $id_bitacora = $formulario_vistas[0][0]["id_bitacora"];
+
+        $query_get_bitacora = "SELECT id_turno, id_movil, id_auxiliar, id_conductor, placa FROM entrega_turnos_bitacora WHERE id_bitacora = ?";
+
+        $result_get_bitacora = DB::connection()->select(DB::raw($query_get_bitacora), [
+            $id_bitacora
+        ]);
+
+        $id_turno = $result_get_bitacora[0]->id_turno;
+
+        $placa_movil = $result_get_bitacora[0]->placa;
+
+        if ($result_get_bitacora[0]->id_movil !== null) {
+            $query_datos_movil = "SELECT VEHNOM FROM equipos WHERE ID_Equipo = ?";
+
+            $result_datos_movil = DB::connection()->select(DB::raw($query_datos_movil), [
+                $result_get_bitacora[0]->id_movil
+            ]);
+
+            $nom_movil = $result_datos_movil[0]->VEHNOM;
+        }
+
+        if ($result_get_bitacora[0]->id_auxiliar !== null) {
+            $query_auxiliar = "SELECT documento, Auxiliar FROM auxiliares WHERE Cod_Aux = ? AND Estado = 1";
+
+            $result_auxiliar = DB::connection()->select(DB::raw($query_auxiliar), [
+                $result_get_bitacora[0]->id_auxiliar
+            ]);
+            
+            if (count($result_auxiliar) !== 0) {
+                $auxiliar = $result_auxiliar[0]->Auxiliar . ', CC ' . $result_auxiliar[0]->documento;
+            }
+        }
+
+        if ($result_get_bitacora[0]->id_conductor !== null) {
+            $query_conductor = "SELECT Conductor, documento FROM conductores WHERE Cod_Con = ? AND Estado = 1";
+
+            $result_conductor = DB::connection()->select(DB::raw($query_conductor), [
+                $result_get_bitacora[0]->id_conductor
+            ]);
+
+            if (count($result_conductor) !== 0) {
+                $conductor = $result_conductor[0]->Conductor . ', CC ' . $result_conductor[0]->documento;
+            }
+        }
+
+        $query_horas_trabajadas = "SELECT Fecha, Turno FROM htrabajadas WHERE Id_Hora = ?";
+
+        $result_horas_trabajadas = DB::connection()->select(DB::raw($query_horas_trabajadas), [
+            $result_get_bitacora[0]->id_turno
+        ]);
+
+        $fecha_apertura = $result_horas_trabajadas[0]->Fecha;
+
+        $query_get_turno = "SELECT Turno FROM turnos WHERE id_Turno = ?";
+
+        $result_get_turno = DB::connection()->select(DB::raw($query_get_turno), [
+            $result_horas_trabajadas[0]->Turno
+        ]);
+
+        $tipo_turno = $result_get_turno[0]->Turno;
+
 
         $fecha_formato = date('Y-m-d');
 
@@ -304,7 +399,15 @@ class ListaTurnosController extends Controller
             'configs_json' => $configs_json,
             'formulario_vistas' => json_encode($formulario_vistas),
             'archivo_base64' => $archivo_base64,
-            'fecha_formato' => $fecha_formato
+            'fecha_formato' => $fecha_formato,
+            'id_bitacora' => $id_bitacora,
+            'id_turno' => $id_turno,
+            'placa_movil' => $placa_movil,
+            'auxiliar' => $auxiliar,
+            'conductor' => $conductor,
+            'nom_movil' => $nom_movil,
+            'fecha_apertura' => $fecha_apertura,
+            'tipo_turno' => $tipo_turno
         ]);
 
         return $pdf->download('prueba.pdf');
