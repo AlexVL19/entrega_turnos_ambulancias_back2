@@ -50,6 +50,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/insertNovedades', 'insertarNovedad');
         Route::post('/getNovedadesMovil', 'getNovedadesMovil');
         Route::post('/insertarFotosReporte', 'insertarFotosReporte');
+        Route::get('/getRangos', 'getRangos');
     });
 
     Route::controller(LoginController::class)->group(function () {

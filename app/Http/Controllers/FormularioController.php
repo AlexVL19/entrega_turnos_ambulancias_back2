@@ -853,4 +853,12 @@ class FormularioController extends Controller
             ]);
         }
     }
+
+    public function getRangos () {
+        $query_get_rangos = "SELECT `key`, `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formulario%'";
+
+        $result_get_rangos = DB::connection()->select(DB::raw($query_get_rangos));
+
+        return $result_get_rangos;
+    }
 }
