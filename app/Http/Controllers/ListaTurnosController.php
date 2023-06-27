@@ -13,11 +13,9 @@ use Illuminate\Support\Facades\Log;
 
 class ListaTurnosController extends Controller
 {
-    /* Consigue todos los turnos entregados que hayan hasta el momento
-    TODO: Conseguir todos los turnos que se hayan llenado solamente el día de hoy 
-    */
+    /* Consigue todos los turnos entregados que hayan hasta el momento*/
     public function getTurnosEntregados() {
-        $query_turnos_entregados = "SELECT * FROM entrega_turnos_bitacora";
+        $query_turnos_entregados = "SELECT * FROM entrega_turnos_bitacora ORDER BY fecha_registro DESC";
 
         $result_turnos_entregados = DB::connection()->select(DB::raw($query_turnos_entregados));
 
@@ -232,49 +230,74 @@ class ListaTurnosController extends Controller
         return Excel::download($datos_tabla, 'reporte_turnos_entregados_' . $fecha_archivo . '.xlsx');
     }
 
+    /* Función que permite ver la foto del reporte de daños, si hay alguno */
     public function verReporte(Request $request) {
+
+        // Verifica si hay daños en el automotor, porque eso determina si hay foto o no
         if ($request->danos_automotor !== 0) {
+
+            // Query que trae la foto del automotor si la bandera del reporte de automotor tiene algún valor y no sea 0 (que se haya llenado el reporte)
             $query_foto = "SELECT foto_automotor FROM entrega_turnos_bitacora WHERE id_bitacora = ? AND foto_automotor IS NOT NULL AND NOT danos_automotor = 0";
 
             $result_foto = DB::connection()->select(DB::raw($query_foto), [
                 $request->id_bitacora
             ]);
 
+            // Almacena la ruta de la foto en esta variable
             $ruta_foto = $result_foto[0]->foto_automotor;
 
+            //Comprueba si la ruta existe dentro del almacenamiento local
             if (Storage::disk('local')->exists($ruta_foto)) {
+
+                //Si existe, consigue el archivo...
                 $archivo = Storage::get($ruta_foto);
 
+                // Y lo encripta en base64
                 return base64_encode($archivo);
             }
 
+            //Si no encuentra nada, devuelve un mensaje de que no se encontró
             else {
                 return 'No encontrado';
             }
         }
 
+        // Si el reporte no ha sido llenado, suelta un mensaje de no encontrado
         else {
             return response(json_encode(array('mensaje' => 'No encontrado')));
         }
     }
 
+    /* Función que permite ver los anexos de un reporte de daños ya llenado. */
     public function verAnexosReporte(Request $request) {
 
+        // Se guardarán todas las imágenes que hayan dentro del reporte.
         $array_imagenes = [];
 
+        // Comprueba si el reporte de daños ha sido llenado o no.
         if ($request->danos_automotor !== 0) {
+
+            //Consigue la ruta de la o las fotos que hayan sido guardadas en el reporte de daños en esta bitácora.
             $query_anexos_reporte = "SELECT ruta_foto FROM entrega_turnos_formulario_fotos WHERE id_bitacora = ? AND ruta_foto IS NOT NULL";
 
             $result_anexos_reporte = DB::connection()->select(DB::raw($query_anexos_reporte), [
                 $request->id_bitacora
             ]);
 
+            //Recorre cada ruta (si hay varias fotos)
             foreach ($result_anexos_reporte as $anexo) {
+
+                //Captura la ruta de la foto en esta variable
                 $ruta_foto = $anexo->ruta_foto;
 
+                //Verifica si la ruta de la foto se encuentra en el almacenamiento local
                 if (Storage::disk('local')->exists($ruta_foto)) {
+
+                    //Consigue el archivo y lo almacena en una variable
                     $archivo = Storage::get($ruta_foto);
 
+                    //Se almacena en un array aparte, el cual contiene el archivo en base64 y su tipo MIME, el cual determina su
+                    //tipo de archivo.
                     array_push($array_imagenes, [
                         "archivo" => base64_encode($archivo),
                         "mime" => Storage::mimeType($ruta_foto)
@@ -282,10 +305,12 @@ class ListaTurnosController extends Controller
                 }
             }
 
+            //Devuelve el array construido a partir de la operación anterior.
             return $array_imagenes;
         }
     }
 
+    /* Función que permite renderizar un archivo .pdf con base a unos datos. */
     public function verFormularioPDF (Request $request) {
         $config_codigo = "";
         $config_version = "";
@@ -298,14 +323,18 @@ class ListaTurnosController extends Controller
         $fecha_apertura = "";
         $tipo_turno = "";
 
+        //Consigue una imagen con base a una ruta pública.
         $archivo_antes = file_get_contents(public_path('images/red-logo.png'));
 
+        //Codifica la imagen de antes a base64
         $archivo_base64 = base64_encode($archivo_antes);
 
+        //Consigue el texto del cabecero mediante config
         $query_configs_formato = "SELECT `value` FROM configs WHERE `key` LIKE 'entrega_turnos_formato%'";
 
         $result_configs_formato = DB::connection()->select(DB::raw($query_configs_formato));
 
+        //Verifica si en el array de configuración anterior coincide con los valores establecidos, luego los almacena en variables
         foreach ($result_configs_formato as $config) {
             if (str_contains($config->value, 'GINF')) {
                 $config_codigo = $config->value;
@@ -320,6 +349,7 @@ class ListaTurnosController extends Controller
             }
         }
 
+        //Luego los codifica a json
         $configs_json = json_encode([
             "codigo" => $config_codigo,
             "version" => $config_version,
@@ -452,5 +482,82 @@ class ListaTurnosController extends Controller
         ]);
 
         return $result_ver_cambios;
+    }
+
+    public function conseguirTurno() {
+
+        $array_turnos = [];
+
+        $query_turnos_entregados = "SELECT * FROM entrega_turnos_bitacora ORDER BY fecha_registro DESC";
+
+        $result_turnos_entregados = DB::connection()->select(DB::raw($query_turnos_entregados));
+
+        foreach ($result_turnos_entregados as $turno_entregado) {
+            $query_encontrar_turno = "SELECT Turno FROM htrabajadas WHERE Id_Hora = ? LIMIT 1";
+
+            $result_encontrar_turno = DB::connection()->select(DB::raw($query_encontrar_turno), [
+                $turno_entregado->id_turno
+            ]);
+
+            $query_encontrar_letra_turno = "SELECT id_Turno, Turno FROM turnos WHERE id_Turno = ? LIMIT 1";
+
+            $result_encontrar_letra_turno = DB::connection()->select(DB::raw($query_encontrar_letra_turno), [
+                $result_encontrar_turno[0]->Turno
+            ]);
+
+            array_push($array_turnos, $result_encontrar_letra_turno);
+        }
+
+        return $array_turnos;
+    }
+
+    public function conseguirIdTurno() {
+
+        $array_id_turnos = [];
+
+        $query_turnos_entregados = "SELECT * FROM entrega_turnos_bitacora ORDER BY fecha_registro DESC";
+
+        $result_turnos_entregados = DB::connection()->select(DB::raw($query_turnos_entregados));
+
+        foreach ($result_turnos_entregados as $turno_entregado) {
+            $query_encontrar_turno = "SELECT Id_Hora, Turno FROM htrabajadas WHERE Id_Hora = ? LIMIT 1";
+
+            $result_encontrar_turno = DB::connection()->select(DB::raw($query_encontrar_turno), [
+                $turno_entregado->id_turno
+            ]);
+
+            array_push($array_id_turnos, $result_encontrar_turno);
+        }
+
+        return $array_id_turnos;
+    }
+
+    public function getFotosNovedad (Request $request) {
+
+        $array_imagenes = [];
+
+        $query_fotos_novedades = "SELECT id_novedad, imagen FROM entrega_turnos_imagenes_novedades WHERE
+        id_bitacora = ?";
+
+        $result_fotos_novedades = DB::connection()->select(DB::raw($query_fotos_novedades), [
+            $request->id_bitacora
+        ]);
+
+        foreach ($result_fotos_novedades as $anexo) {
+            $ruta_foto = $anexo->imagen;
+
+            if (Storage::disk('local')->exists($ruta_foto)) {
+                
+                $archivo = Storage::get($ruta_foto);
+
+                array_push($array_imagenes, [
+                    "id_novedad" => $anexo->id_novedad,
+                    "archivo" => base64_encode($archivo),
+                    "mime" => Storage::mimeType($ruta_foto)
+                ]);
+            }
+        }
+
+        return $array_imagenes;
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use PDO;
 
 class FormularioController extends Controller
 {
@@ -800,9 +801,14 @@ class FormularioController extends Controller
     /* Inserta una novedad cada vez que se presenta una al enviar el formulario. Mientras procesa la información, si una verificación
     del formulario tiene algún comentario se añade aquí también. */
     public function insertarNovedad(Request $request) {
+        $array_ids = [];
+
         $query_insert_novedad = "INSERT INTO entrega_turnos_novedades_bitacora 
         (id_bitacora, id_turno, id_movil, id_auxiliar, id_conductor, id_verificacion_tipo, id_categoria_verificacion, comentarios_novedad) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $query_insertar_imagen = "INSERT INTO entrega_turnos_imagenes_novedades
+        (id_novedad, id_bitacora, id_turno, imagen) VALUES (?, ?, ?, ?)";
 
         foreach ($request->all() as $novedad) {
             $result_insert_novedad = DB::connection()->select(DB::raw($query_insert_novedad), [
@@ -815,7 +821,15 @@ class FormularioController extends Controller
                 $novedad["id_categoria_verificacion"],
                 $novedad["comentarios_novedad"]
             ]);
+
+            $id_ultimo_registro = DB::getPdo()->lastInsertId();
+
+            array_push($array_ids, $id_ultimo_registro);
+
+            Log::info($novedad);
         }
+
+        return $array_ids;
     }
 
     public function getNovedadesMovil(Request $request) {
@@ -860,5 +874,30 @@ class FormularioController extends Controller
         $result_get_rangos = DB::connection()->select(DB::raw($query_get_rangos));
 
         return $result_get_rangos;
+    }
+
+    public function guardarImagenesNovedad (Request $request) {
+
+        $ruta_imagen = null;
+
+        $query_guardar_imagenes = "INSERT INTO entrega_turnos_imagenes_novedades
+        (id_novedad, id_bitacora, id_turno, imagen) VALUES (?, ?, ?, ?)";
+
+        for ($i = 0; $i < count($request->all()) - 3; $i++) { 
+            $archivo = $request->file('imagen_' . $i);
+
+            $nombre_archivo = '_' . Str::random(5) . $archivo->getClientOriginalName();
+
+            $ruta_imagen = 'imagenes_novedad_' . $request->id_novedad . '_en_bitacora_' . $request->id_bitacora . '/' . $nombre_archivo;
+
+            Storage::disk('local')->put($ruta_imagen, File::get($archivo));
+
+            $result_guardar_imagenes = DB::connection()->select(DB::raw($query_guardar_imagenes), [
+                $request->id_novedad,
+                $request->id_bitacora,
+                $request->id_turno,
+                $ruta_imagen
+            ]);
+        }
     }
 }

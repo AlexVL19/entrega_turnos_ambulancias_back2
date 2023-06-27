@@ -51,6 +51,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/getNovedadesMovil', 'getNovedadesMovil');
         Route::post('/insertarFotosReporte', 'insertarFotosReporte');
         Route::get('/getRangos', 'getRangos');
+        Route::post('/guardarImgsNovedad', 'guardarImagenesNovedad');
     });
 
     Route::controller(LoginController::class)->group(function () {
@@ -77,6 +78,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/verReporte', 'verReporte');
         Route::post('/verCambiosNovedad', 'verCambiosNovedad');
         Route::post('verAnexosReporte', 'verAnexosReporte');
+        Route::get('/conseguirTurno', 'conseguirTurno');
+        Route::get('/conseguirIdTurno', 'conseguirIdTurno');
+        Route::post('/getImagenesNovedad', 'getFotosNovedad');
     });
 
     Route::controller(NovedadesController::class)->group(function () {
